@@ -15,6 +15,24 @@
         <vm:MainWindowViewModel/>
     </Design.DataContext>
 
-    <TextBlock Text="{Binding Greeting}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+    
+    <Grid RowDefinitions="Auto,*,Auto" HorizontalAlignment="Stretch" ColumnDefinitions="*">
+        <!--HEADER-->
+        <TextBlock Grid.Row="0" Grid.Column="0" Text="{Binding VideoRecognition}" Classes="Header" HorizontalAlignment="Center"/>
+        
+        <!--VIDEO-->
+        <!-- Source="{Binding VideoSource}" -->
+        <Image Grid.Row="1" Grid.Column="0"  Stretch="UniformToFill"/>
+        
+        <!--BUTTONS-->
+        
+        <StackPanel Grid.Row="2" Grid.Column="0" Orientation="Horizontal" HorizontalAlignment="Center">
+            <Button Content="Enable" Command="{Binding EnableCamera}" Margin="5"/>
+            <Button Content="Start" Command="{Binding }" Margin="5"/>
+            <Button Content="Stop" Command="{Binding }" Margin="5"/>
+        </StackPanel>
+        
+    </Grid>
+    
 
 </Window>

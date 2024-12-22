@@ -10,6 +10,7 @@
     </Application.DataTemplates>
   
     <Application.Styles>
+        <StyleInclude Source="avares://FaceRec/Styles/AppStyles.axaml" />
         <FluentTheme />
     </Application.Styles>
 </Application>

@@ -2,5 +2,15 @@
 
 public partial class MainWindowViewModel : ViewModelBase
 {
-    public string Greeting { get; } = "Welcome to Avalonia!";
+    public string VideoRecognition  { get; } = "Sample Video Recognition APP";
+    
+    public MainWindowViewModel()
+    {
+    }
+
+    public void EnableCamera()
+    {
+        // Enable Camera
+    }
+    
 }
