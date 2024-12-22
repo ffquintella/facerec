@@ -16,6 +16,14 @@ public partial class MainWindowViewModel : ViewModelBase
     }
     
     
+    private bool _isCameraEnabled;
+    
+    public bool IsCameraEnabled
+    {
+        get => _isCameraEnabled;
+        set => this.RaiseAndSetIfChanged(ref _isCameraEnabled, value);
+    }
+    
     private Bitmap _image;
     
     public Bitmap Image
@@ -29,10 +37,14 @@ public partial class MainWindowViewModel : ViewModelBase
     public async void EnableCamera()
     {
 
-        //Image = ImageHelper.LoadFromDisk("E:\\tmp\\blackbuck.bmp");
+        IsCameraEnabled = true;
+
+        _ = CaptureVideo();
         
-        
-        
+    }
+
+    private async Task CaptureVideo()
+    {
         // Enable Camera
         
         // Capture device enumeration:
@@ -49,46 +61,74 @@ public partial class MainWindowViewModel : ViewModelBase
                 // "1920x1080 [JPEG, 30fps]"
                 // "640x480 [YUYV, 60fps]"
                 Console.WriteLine(characteristics);
+                if(characteristics.PixelFormat == PixelFormats.Unknown)
+                    Console.WriteLine("Unsupported format");
             }
         }
 
+        
         // Open a device with a video characteristics:
-        var descriptor0 = devices.EnumerateDescriptors().ElementAt(1);
-
+        var descriptor0 = devices.EnumerateDescriptors().ElementAt(0);
+        
+        
+        // Exclude unsupported formats:
+        var characteristicsSup = descriptor0.Characteristics.
+            Where(c => c.PixelFormat != PixelFormats.Unknown).
+            ToArray();
+        
+        
         await using var device = await descriptor0.OpenAsync(
-            descriptor0.Characteristics[0],
+            characteristicsSup[0],
+            //TranscodeFormats.BT709,
+            //true,
+            //1,
             async bufferScope => await ProcessImageAsync(bufferScope));
+        
+        
+        /*using var deviceObservable = await descriptor0.AsObservableAsync(
+            characteristicsSup[0],
+        TranscodeFormats.BT709);*/
+
+        // Subscribe the device.
+        //deviceObservable.Subscribe(bufferScope => ProcessImageAsync(bufferScope));
 
         // Start processing:
         await device.StartAsync();
 
-        // ...
-
+        await Task.Run(async () =>
+        {
+            while(IsCameraEnabled) await Task.Delay(new TimeSpan(0, 0, 1));
+            
+        });
+        
         await device.StopAsync();
-        
-        
     }
 
-    private async Task DisableCamera()
+    public async Task DisableCamera()
     {
         // Stop processing:
-        await _device.StopAsync();
+        IsCameraEnabled = false;
+        Image = null;
     }
     
     
     private async Task ProcessImageAsync(PixelBufferScope bufferScope)
     {
         // here executed in a worker thread
-        byte[] imageData = bufferScope.Buffer.ExtractImage();
+        //byte[] imageData = bufferScope.Buffer.ExtractImage();
+        
+        //byte[] imageData = bufferScope.Buffer.CopyImage();
+        
+        ArraySegment<byte> image =
+            bufferScope.Buffer.ReferImage();
         
         // Anything use of it...
-        var ms = new MemoryStream(imageData);
+        //var ms = new MemoryStream(imageData);
+        
+        var ms = new MemoryStream(
+            image.Array, image.Offset, image.Count);
 
         Image = new Bitmap(ms);
-
-        //Image = System.Drawing.Bitmap.FromStream(ms);
-
-
 
     }
     

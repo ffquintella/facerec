@@ -22,14 +22,14 @@
         
         <!--VIDEO-->
         <!-- Source="{Binding VideoSource}" -->
-        <Image Grid.Row="1" Grid.Column="0"  Source="{Binding Image}" Width="200" Height="200"/>
+        <Image Grid.Row="1" Grid.Column="0"  Source="{Binding Image, Mode=TwoWay}" Width="400" Height="400"/>
         
         <!--BUTTONS-->
         
         <StackPanel Grid.Row="2" Grid.Column="0" Orientation="Horizontal" HorizontalAlignment="Center">
             <Button Content="Enable" Command="{Binding EnableCamera}" Margin="5"/>
             <Button Content="Start" Command="{Binding  }" Margin="5"/>
-            <Button Content="Stop" Command="{Binding  }" Margin="5"/>
+            <Button Content="Stop" Command="{Binding   }" Margin="5"/>
             <Button Content="Disable" Command="{Binding DisableCamera}" Margin="5"/>
         </StackPanel>
         
