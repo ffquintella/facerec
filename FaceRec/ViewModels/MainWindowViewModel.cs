@@ -24,6 +24,8 @@ public partial class MainWindowViewModel : ViewModelBase
         set => this.RaiseAndSetIfChanged(ref _image, value);
     }
 
+    private CaptureDevice? _device;
+
     public async void EnableCamera()
     {
 
@@ -51,7 +53,7 @@ public partial class MainWindowViewModel : ViewModelBase
         }
 
         // Open a device with a video characteristics:
-        var descriptor0 = devices.EnumerateDescriptors().ElementAt(0);
+        var descriptor0 = devices.EnumerateDescriptors().ElementAt(1);
 
         await using var device = await descriptor0.OpenAsync(
             descriptor0.Characteristics[0],
@@ -62,11 +64,17 @@ public partial class MainWindowViewModel : ViewModelBase
 
         // ...
 
-        // Stop processing:
         await device.StopAsync();
         
         
     }
+
+    private async Task DisableCamera()
+    {
+        // Stop processing:
+        await _device.StopAsync();
+    }
+    
     
     private async Task ProcessImageAsync(PixelBufferScope bufferScope)
     {
