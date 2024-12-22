@@ -22,7 +22,7 @@
         
         <!--VIDEO-->
         <!-- Source="{Binding VideoSource}" -->
-        <Image Grid.Row="1" Grid.Column="0"  Stretch="UniformToFill"/>
+        <Image Grid.Row="1" Grid.Column="0"  Source="{Binding Image}" Width="200" Height="200"/>
         
         <!--BUTTONS-->
         
