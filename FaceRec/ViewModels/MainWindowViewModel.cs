@@ -81,7 +81,7 @@ public partial class MainWindowViewModel : ViewModelBase
             characteristicsSup[0],
             //TranscodeFormats.BT709,
             //true,
-            //1,
+            //10,
             async bufferScope => await ProcessImageAsync(bufferScope));
         
         
