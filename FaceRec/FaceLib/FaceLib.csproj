@@ -1,0 +1,16 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net9.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <PackageReference Include="Emgu.CV" Version="4.9.0.5494" />
+      <PackageReference Include="Emgu.CV.Bitmap" Version="4.9.0.5494" />
+      <PackageReference Include="Emgu.CV.Models" Version="4.9.0.5494" />
+      <PackageReference Include="Emgu.CV.UI" Version="4.9.0.5494" />
+    </ItemGroup>
+
+</Project>
