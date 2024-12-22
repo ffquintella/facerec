@@ -1,8 +1,10 @@
 ﻿using FlashCap;
 using System.Reactive;
 using Avalonia.Media.Imaging;
+using Avalonia.Platform;
 using FaceRec.Helpers;
 using ReactiveUI;
+using PixelFormats = FlashCap.PixelFormats;
 
 
 namespace FaceRec.ViewModels;
@@ -13,6 +15,7 @@ public partial class MainWindowViewModel : ViewModelBase
     
     public MainWindowViewModel()
     {
+        Image = new Bitmap(AssetLoader.Open(new Uri("avares://FaceRec/Assets/placeholder.png")));
     }
     
     
@@ -102,13 +105,14 @@ public partial class MainWindowViewModel : ViewModelBase
         });
         
         await device.StopAsync();
+        Image = new Bitmap(AssetLoader.Open(new Uri("avares://FaceRec/Assets/placeholder.png")));
     }
 
     public async Task DisableCamera()
     {
         // Stop processing:
         IsCameraEnabled = false;
-        Image = null;
+        //Image = new Bitmap(AssetLoader.Open(new Uri("avares://FaceRec/Assets/placeholder.png")));
     }
     
     
