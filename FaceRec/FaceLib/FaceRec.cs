@@ -37,20 +37,24 @@ public class FaceRec
         this.eigenFaceRecognizer = new EigenFaceRecognizer(80, double.PositiveInfinity);
     }
     
-    public Rectangle[] DetectFace(MemoryStream imageStream, int width, int height)
+    public Rectangle[] DetectFace(byte[] imageBytes)
     {
         //Bitmap bitmap = new Bitmap((Stream) new MemoryStream(image));
         
         
-        Image<Bgr, byte> resultImage = new Image<Bgr, byte>(width, height);
-
-        resultImage.Bytes = imageStream.ToArray();
+        //Image<Bgr, byte> resultImage = new Image<Bgr, byte>(width, height);
+        //resultImage.Bytes = imageStream.ToArray();
+        
+        Mat mat = new Mat();
+        
+        CvInvoke.Imdecode(imageBytes, ImreadModes.Grayscale, mat);
         
         
         //resultImage.Bytes = image.sa;
         
-        Mat mat = new Mat();
-        CvInvoke.CvtColor((IInputArray) this.Frame, (IOutputArray) mat, ColorConversion.Bgr2Gray);
+        
+        
+        //CvInvoke.CvtColor((IInputArray) this.Frame, (IOutputArray) mat, ColorConversion.Bgr2Gray);
         CvInvoke.EqualizeHist((IInputArray) mat, (IOutputArray) mat);
         Rectangle[] rectangleArray = this.CascadeClassifier.DetectMultiScale((IInputArray) mat, 1.1, 4, new Size(), new Size());
 
