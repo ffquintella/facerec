@@ -67,6 +67,9 @@ public partial class MainWindowViewModel : ViewModelBase
         
     }
     
+    private bool _isSaveEnabled ;
+    
+    
     private Rectangle[] _faces;
 
     private async Task CaptureVideo()
@@ -177,10 +180,18 @@ public partial class MainWindowViewModel : ViewModelBase
             //Console.WriteLine("Frame Count: " + frameCount);
         
             if(frameCount > 100) frameCount = 0;
-        
 
-            if(_faces.Length > 0) 
+
+            if (_faces.Length > 0)
+            {
+                if (_isSaveEnabled)
+                {
+                    faceRec.SaveFace(image.Array, _faces[0], PersonName);
+                    _isSaveEnabled = false;
+                }
+                
                 Image = ImageDraw.DrawRectanglesOnFaces(image.Array, _faces);
+            }
             else
             {
                 var ms = new MemoryStream(
@@ -200,7 +211,7 @@ public partial class MainWindowViewModel : ViewModelBase
 
     public async Task SavePerson()
     {
-        
+        _isSaveEnabled = true;
     }
 
 }
