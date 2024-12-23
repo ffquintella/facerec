@@ -1,9 +1,11 @@
-﻿using FlashCap;
+﻿using System.Drawing;
+using FlashCap;
 using System.Reactive;
-using Avalonia.Media.Imaging;
 using Avalonia.Platform;
+using FaceLib;
 using FaceRec.Helpers;
 using ReactiveUI;
+using Bitmap = Avalonia.Media.Imaging.Bitmap;
 using PixelFormats = FlashCap.PixelFormats;
 
 
@@ -11,6 +13,9 @@ namespace FaceRec.ViewModels;
 
 public partial class MainWindowViewModel : ViewModelBase
 {
+    
+    private int frameCount = 0;
+    
     public string VideoRecognition  { get; } = "Sample Video Recognition APP";
     
     public MainWindowViewModel()
@@ -45,6 +50,8 @@ public partial class MainWindowViewModel : ViewModelBase
         _ = CaptureVideo();
         
     }
+    
+    private Rectangle[] _faces;
 
     private async Task CaptureVideo()
     {
@@ -81,10 +88,10 @@ public partial class MainWindowViewModel : ViewModelBase
         
         
         await using var device = await descriptor0.OpenAsync(
-            characteristicsSup[0],
-            //TranscodeFormats.BT709,
-            //true,
-            //10,
+            characteristicsSup[4],
+            TranscodeFormats.BT709,
+            true,
+            10,
             async bufferScope => await ProcessImageAsync(bufferScope));
         
         
@@ -118,6 +125,8 @@ public partial class MainWindowViewModel : ViewModelBase
     
     private async Task ProcessImageAsync(PixelBufferScope bufferScope)
     {
+        frameCount++;
+        
         // here executed in a worker thread
         //byte[] imageData = bufferScope.Buffer.ExtractImage();
         
@@ -129,16 +138,29 @@ public partial class MainWindowViewModel : ViewModelBase
         // Anything use of it...
         //var ms = new MemoryStream(imageData);
         
-        var ms = new MemoryStream(
-            image.Array, image.Offset, image.Count);
-
         var faceRec = new FaceLib.FaceRec();
+        
+        //Image = new Bitmap(ms);
+        
+        if(frameCount % 10 == 0)
+            _faces = faceRec.DetectFace(image.Array);
+        
+        //Console.WriteLine("Frame Count: " + frameCount);
+        
+        if(frameCount > 100) frameCount = 0;
+        
 
-        //var imgBytes = ms.ToArray();
+        if(_faces.Length > 0) 
+            Image = ImageDraw.DrawRectanglesOnFaces(image.Array, _faces);
+        else
+        {
+            var ms = new MemoryStream(
+                image.Array, image.Offset, image.Count);
+            Image = new Bitmap(ms);
+        }
+            
         
-        Image = new Bitmap(ms);
         
-        var faces = faceRec.DetectFace(image.Array);
         
 
 
