@@ -55,6 +55,14 @@ public partial class MainWindowViewModel : ViewModelBase
         get => _personName;
         set => this.RaiseAndSetIfChanged(ref _personName, value);
     }
+    
+    private string _identity;
+    
+    public string Identity
+    {
+        get => _identity;
+        set => this.RaiseAndSetIfChanged(ref _identity, value);
+    }
 
     private CaptureDevice? _device;
 
@@ -71,6 +79,8 @@ public partial class MainWindowViewModel : ViewModelBase
     
     
     private Rectangle[] _faces;
+    
+    private FaceLib.FaceRec faceRec =  new FaceLib.FaceRec();
 
     private async Task CaptureVideo()
     {
@@ -144,6 +154,7 @@ public partial class MainWindowViewModel : ViewModelBase
     public void RecogStart()
     {
         IsRecognitionEnabled = true;
+        
     }
     
     public void RecogStop()
@@ -170,7 +181,8 @@ public partial class MainWindowViewModel : ViewModelBase
 
         if (IsRecognitionEnabled)
         {
-            var faceRec = new FaceLib.FaceRec();
+           
+            if(!faceRec.isTrained) faceRec.LoadTrainedFaces();
         
             //Image = new Bitmap(ms);
         
@@ -191,6 +203,7 @@ public partial class MainWindowViewModel : ViewModelBase
                 }
                 
                 Image = ImageDraw.DrawRectanglesOnFaces(image.Array, _faces);
+                Identity = faceRec.IdentifyPerson(image.Array, _faces[0]);
             }
             else
             {

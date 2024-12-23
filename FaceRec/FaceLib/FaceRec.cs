@@ -78,7 +78,7 @@ public class FaceRec
         LoadTrainedFaces();
     }
     
-    private void LoadTrainedFaces()
+    public void LoadTrainedFaces()
     {
         try
         {
@@ -95,11 +95,52 @@ public class FaceRec
             }
             this.eigenFaceRecognizer = new EigenFaceRecognizer(numComponents, this.distance);
             this.eigenFaceRecognizer.Train(this.trainedFaces.ToArray(), this.PersonLabs.ToArray());
+            
+            isTrained = true;
         }
         catch
         {
             throw new Exception("Error Training Faces");
         }
+    }
+    
+    
+    public string? IdentifyPerson(byte[] imageBytes, Rectangle face)
+    {
+        try
+        {
+            if (!isTrained)
+                return null;
+            
+            Mat mat = new Mat();
+            CvInvoke.Imdecode(imageBytes, ImreadModes.Grayscale, mat);
+
+            Image<Gray, byte> image = mat.ToImage<Gray, byte>();
+            
+            image.ROI = face;
+                
+            image = image.Resize(100, 100, Inter.Cubic);
+           
+            CvInvoke.EqualizeHist((IInputArray) image, (IOutputArray) image);
+            FaceRecognizer.PredictionResult predictionResult = this.eigenFaceRecognizer.Predict((IInputArray) image);
+            if (predictionResult.Label != -1 && predictionResult.Distance < this.distance)
+            {
+                //this.PictureBox_smallFrame.Image = (Image) this.trainedFaces[predictionResult.Label].Bitmap;
+
+                setPersonName = this.Names[predictionResult.Label]
+                    .Replace(Environment.CurrentDirectory + "\\Image\\", "").Replace(".jpg", "");
+                return setPersonName;
+                //CvInvoke.PutText((IInputOutputArray) this.Frame, this.setPersonName, new Point(face.X - 2, face.Y - 2), FontFace.HersheyPlain, 1.0, new Bgr(Color.LimeGreen).MCvScalar, 1, LineType.EightConnected, false);
+            }
+            else
+                return "Unknown";
+            //CvInvoke.PutText((IInputOutputArray) this.Frame, "Unknown", new Point(face.X - 2, face.Y - 2), FontFace.HersheyPlain, 1.0, new Bgr(Color.OrangeRed).MCvScalar, 1, LineType.EightConnected, false);
+        }
+        catch
+        {
+        }
+
+        return null;
     }
     
     
