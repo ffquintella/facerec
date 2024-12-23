@@ -32,6 +32,14 @@ public partial class MainWindowViewModel : ViewModelBase
         set => this.RaiseAndSetIfChanged(ref _isCameraEnabled, value);
     }
     
+    private bool _isRecognitionEnabled;
+    
+    public bool IsRecognitionEnabled
+    {
+        get => _isRecognitionEnabled;
+        set => this.RaiseAndSetIfChanged(ref _isRecognitionEnabled, value);
+    }
+    
     private Bitmap _image;
     
     public Bitmap Image
@@ -89,9 +97,9 @@ public partial class MainWindowViewModel : ViewModelBase
         
         await using var device = await descriptor0.OpenAsync(
             characteristicsSup[4],
-            TranscodeFormats.BT709,
-            true,
-            10,
+            //TranscodeFormats.BT709,
+            //true,
+            //10,
             async bufferScope => await ProcessImageAsync(bufferScope));
         
         
@@ -122,6 +130,16 @@ public partial class MainWindowViewModel : ViewModelBase
         //Image = new Bitmap(AssetLoader.Open(new Uri("avares://FaceRec/Assets/placeholder.png")));
     }
     
+    public void RecogStart()
+    {
+        IsRecognitionEnabled = true;
+    }
+    
+    public void RecogStop()
+    {
+        IsRecognitionEnabled = false;
+    }
+    
     
     private async Task ProcessImageAsync(PixelBufferScope bufferScope)
     {
@@ -137,31 +155,37 @@ public partial class MainWindowViewModel : ViewModelBase
         
         // Anything use of it...
         //var ms = new MemoryStream(imageData);
+
+
+        if (IsRecognitionEnabled)
+        {
+            var faceRec = new FaceLib.FaceRec();
         
-        var faceRec = new FaceLib.FaceRec();
+            //Image = new Bitmap(ms);
         
-        //Image = new Bitmap(ms);
+            if(frameCount % 4 == 0)
+                _faces = faceRec.DetectFace(image.Array);
         
-        if(frameCount % 10 == 0)
-            _faces = faceRec.DetectFace(image.Array);
+            //Console.WriteLine("Frame Count: " + frameCount);
         
-        //Console.WriteLine("Frame Count: " + frameCount);
-        
-        if(frameCount > 100) frameCount = 0;
+            if(frameCount > 100) frameCount = 0;
         
 
-        if(_faces.Length > 0) 
-            Image = ImageDraw.DrawRectanglesOnFaces(image.Array, _faces);
+            if(_faces.Length > 0) 
+                Image = ImageDraw.DrawRectanglesOnFaces(image.Array, _faces);
+            else
+            {
+                var ms = new MemoryStream(
+                    image.Array, image.Offset, image.Count);
+                Image = new Bitmap(ms);
+            }
+        }
         else
         {
             var ms = new MemoryStream(
                 image.Array, image.Offset, image.Count);
             Image = new Bitmap(ms);
         }
-            
-        
-        
-        
 
 
     }
