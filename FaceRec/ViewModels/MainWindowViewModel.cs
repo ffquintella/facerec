@@ -47,6 +47,14 @@ public partial class MainWindowViewModel : ViewModelBase
         get => _image;
         set => this.RaiseAndSetIfChanged(ref _image, value);
     }
+    
+    private string _personName;
+    
+    public string PersonName
+    {
+        get => _personName;
+        set => this.RaiseAndSetIfChanged(ref _personName, value);
+    }
 
     private CaptureDevice? _device;
 
@@ -189,5 +197,10 @@ public partial class MainWindowViewModel : ViewModelBase
 
 
     }
-    
+
+    public async Task SavePerson()
+    {
+        
+    }
+
 }
