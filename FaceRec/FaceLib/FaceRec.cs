@@ -1,4 +1,5 @@
 using System.ComponentModel;
+using System.Drawing;
 using Emgu.CV;
 using Emgu.CV.CvEnum;
 using Emgu.CV.Face;
@@ -11,7 +12,7 @@ public class FaceRec
     private double distance = 1E+19;
     private CascadeClassifier CascadeClassifier = new CascadeClassifier(Environment.CurrentDirectory + "/Haarcascade/haarcascade_frontalface_alt.xml");
     private Image<Bgr, byte> Frame = (Image<Bgr, byte>) null;
-//private Emgu.CV.Capture camera;
+
     private Mat mat = new Mat();
     private List<Image<Gray, byte>> trainedFaces = new List<Image<Gray, byte>>();
     private List<int> PersonLabs = new List<int>();
@@ -35,5 +36,27 @@ public class FaceRec
     {
         this.eigenFaceRecognizer = new EigenFaceRecognizer(80, double.PositiveInfinity);
     }
+    
+    public Rectangle[] DetectFace(MemoryStream imageStream, int width, int height)
+    {
+        //Bitmap bitmap = new Bitmap((Stream) new MemoryStream(image));
+        
+        
+        Image<Bgr, byte> resultImage = new Image<Bgr, byte>(width, height);
+
+        resultImage.Bytes = imageStream.ToArray();
+        
+        
+        //resultImage.Bytes = image.sa;
+        
+        Mat mat = new Mat();
+        CvInvoke.CvtColor((IInputArray) this.Frame, (IOutputArray) mat, ColorConversion.Bgr2Gray);
+        CvInvoke.EqualizeHist((IInputArray) mat, (IOutputArray) mat);
+        Rectangle[] rectangleArray = this.CascadeClassifier.DetectMultiScale((IInputArray) mat, 1.1, 4, new Size(), new Size());
+
+        return rectangleArray;
+
+    }
+
     
 }

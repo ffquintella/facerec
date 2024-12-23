@@ -13,4 +13,15 @@
       <PackageReference Include="Emgu.CV.UI" Version="4.9.0.5494" />
     </ItemGroup>
 
+    <ItemGroup>
+      <Folder Include="Haarcascade\" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <None Remove="Haarcascade\haarcascade_frontalface_alt.xml" />
+      <Content Include="Haarcascade\haarcascade_frontalface_alt.xml">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </Content>
+    </ItemGroup>
+
 </Project>

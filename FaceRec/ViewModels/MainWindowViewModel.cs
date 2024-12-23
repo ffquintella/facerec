@@ -132,7 +132,18 @@ public partial class MainWindowViewModel : ViewModelBase
         var ms = new MemoryStream(
             image.Array, image.Offset, image.Count);
 
+        var faceRec = new FaceLib.FaceRec();
+
+        //var imgBytes = ms.ToArray();
+        
         Image = new Bitmap(ms);
+        /*
+        using (var stream = new MemoryStream())
+        {
+            Image.Save(stream);
+            var faces = faceRec.DetectFace(stream, Convert.ToInt32(Image.Size.Width), Convert.ToInt32(Image.Size.Height));
+        }*/
+
 
     }
     
