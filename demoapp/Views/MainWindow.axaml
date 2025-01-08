@@ -15,6 +15,29 @@
         <vm:MainWindowViewModel/>
     </Design.DataContext>
 
-    <TextBlock Text="{Binding Greeting}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+    <Grid RowDefinitions="Auto,Auto,*,Auto" HorizontalAlignment="Stretch" ColumnDefinitions="*">
+        <!--HEADER-->
+        <TextBlock Grid.Row="0" Grid.Column="0" Text="{Binding VideoRecognition}" Classes="Header" HorizontalAlignment="Center"/>
+        <StackPanel Grid.Row="1">
+            <TextBlock Text="ID: "/> <TextBlock Text="{Binding Identity}"/>
+        </StackPanel>    
+        
+        <!--VIDEO-->
+        <!-- Source="{Binding VideoSource}" -->
+        <Image Grid.Row="2" Grid.Column="0"  Source="{Binding Image, Mode=TwoWay}" Width="400" Height="400"/>
+        
+        <!--BUTTONS-->
+        
+        <StackPanel Grid.Row="3" Grid.Column="0" Orientation="Horizontal" HorizontalAlignment="Center">
+            <Button Content="Enable" Command="{Binding EnableCamera}" Margin="5"/>
+            <Button Content="Start" Command="{Binding RecogStart }" Margin="5"/>
+            <Button Content="Stop" Command="{Binding RecogStop   }" Margin="5"/>
+            <Button Content="Disable" Command="{Binding DisableCamera}" Margin="5"/>
+            <TextBlock Text="Person name:" Margin="15 10 5 5 "/>
+            <TextBox Text="{Binding PersonName}" Margin=" 5 " Width="80"/>
+            <Button Content="Save" Command="{Binding SavePerson}" Margin="5"/>
+        </StackPanel>
+        
+    </Grid>
 
 </Window>
