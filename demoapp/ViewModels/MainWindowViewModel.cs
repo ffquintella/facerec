@@ -191,7 +191,6 @@ private int frameCount = 0;
             
             using (Image<Rgba32> image = SixLabors.ImageSharp.Image.LoadPixelData<Rgba32>(rgbaFrame.RawData, rgbaFrame.Width, rgbaFrame.Height))
             {
-                //image.SaveAsJpeg($"/Users/felipe/tmp/frame_{DateTime.Now:yyyyMMddHHmmss}.jpg");
                 
                 var ms = new MemoryStream();
                 image.SaveAsJpeg(ms);
