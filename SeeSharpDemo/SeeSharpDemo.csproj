@@ -11,4 +11,10 @@
       <ProjectReference Include="..\..\SeeShark\SeeShark\SeeShark.csproj" />
     </ItemGroup>
 
+    <ItemGroup>
+      <None Update="Info.plist">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </None>
+    </ItemGroup>
+
 </Project>

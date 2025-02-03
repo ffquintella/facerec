@@ -14,6 +14,8 @@ Console.WriteLine("Camera Hello, World!");
 
 FFmpegManager.SetupFFmpeg(["/opt/homebrew/Cellar/ffmpeg/7.1_4/lib/"]);
 
+//FFmpegManager.SetupFFmpeg(["/opt/homebrew/Cellar/ffmpeg@6/6.1.2_7/lib/"]);
+
 // Create a CameraManager to manage camera devices
 using var manager = new CameraManager();
 
@@ -27,7 +29,7 @@ camera.OnFrame += FrameHandler.Handler;
 camera.StartCapture();
 
 // Just wait a bit
-Thread.Sleep(TimeSpan.FromSeconds(10));
+Thread.Sleep(TimeSpan.FromSeconds(20));
 
 // Stop decoding frames
 camera.StopCapture();
