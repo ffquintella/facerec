@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Diagnostics;
+using System.Drawing.Imaging;
 using System.IO;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 using Avalonia.Media.Imaging;
@@ -15,6 +17,7 @@ using SeeShark.Device;
 using SeeShark.FFmpeg;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
+using SkiaSharp;
 using PixelFormat = SeeShark.PixelFormat;
 using PixelFormats = FlashCap.PixelFormats;
 using Rectangle = Avalonia.Controls.Shapes.Rectangle;
@@ -61,6 +64,14 @@ private int frameCount = 0;
     {
         get => _image;
         set => this.RaiseAndSetIfChanged(ref _image, value);
+    }
+    
+    private SKImage _skImage;
+    
+    public SKImage SkImage
+    {
+        get => _skImage;
+        set => this.RaiseAndSetIfChanged(ref _skImage, value);
     }
     
     private string _personName;
@@ -177,6 +188,7 @@ private int frameCount = 0;
         }
         else
         {
+            
             using (Image<Rgba32> image = SixLabors.ImageSharp.Image.LoadPixelData<Rgba32>(rgbaFrame.RawData, rgbaFrame.Width, rgbaFrame.Height))
             {
                 //image.SaveAsJpeg($"/Users/felipe/tmp/frame_{DateTime.Now:yyyyMMddHHmmss}.jpg");
@@ -185,11 +197,11 @@ private int frameCount = 0;
                 image.SaveAsJpeg(ms);
                 ms.Position = 0;
                 Image = new Bitmap(ms);
+                
             }
             
-            /*var ms = new MemoryStream(
-                rgbaFrame.RawData.ToArray(), 0, rgbaFrame.RawData.Length, false, true);
-            Image = new Bitmap(ms);*/
+
+
         }
 
 

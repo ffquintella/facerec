@@ -3,6 +3,7 @@
         xmlns:vm="using:demoapp.ViewModels"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:siv="https://github.com/kekyo/SkiaImageView"
         mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
         x:Class="demoapp.Views.MainWindow"
         x:DataType="vm:MainWindowViewModel"
@@ -25,6 +26,11 @@
         <!--VIDEO-->
         <!-- Source="{Binding VideoSource}" -->
         <Image Grid.Row="2" Grid.Column="0"  Source="{Binding Image, Mode=OneWay}" Width="400" Height="400"/>
+        
+        <!--siv:SKImageView Grid.Row="2" Grid.Column="0"
+                         Stretch="Uniform"
+                         Width="400" Height="400"
+                         Source="{Binding SkImage, Mode=OneWay}" /-->
         
         <!--BUTTONS-->
         
