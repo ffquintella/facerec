@@ -6,6 +6,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SeeSharpDemo", "SeeSharpDem
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SeeShark", "..\SeeShark\SeeShark\SeeShark.csproj", "{209CADC0-3DB8-4EFB-AC02-EBD269C8A9AD}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MLFaceLib", "MLFaceLib\MLFaceLib.csproj", "{AFCB70FC-9424-4AC2-A703-0F570AE0562D}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -24,5 +26,9 @@ Global
 		{209CADC0-3DB8-4EFB-AC02-EBD269C8A9AD}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{209CADC0-3DB8-4EFB-AC02-EBD269C8A9AD}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{209CADC0-3DB8-4EFB-AC02-EBD269C8A9AD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{AFCB70FC-9424-4AC2-A703-0F570AE0562D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AFCB70FC-9424-4AC2-A703-0F570AE0562D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AFCB70FC-9424-4AC2-A703-0F570AE0562D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AFCB70FC-9424-4AC2-A703-0F570AE0562D}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
