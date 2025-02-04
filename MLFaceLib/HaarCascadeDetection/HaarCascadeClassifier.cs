@@ -95,10 +95,25 @@ namespace MLFaceLib.HaarCascadeDetection
                             // Typically, internalNodes is a space‑separated string, for example: "0 -1 1070.1920166015625"
                             string internalNodesStr = wcElem.Element("internalNodes").Value.Trim();
                             string leafValuesStr = wcElem.Element("leafValues").Value.Trim();
-                            weak.InternalNodes = internalNodesStr
+                           
+                            
+                            /*weak.InternalNodes = internalNodesStr
                                 .Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries)
                                 .Select(s => double.Parse(s, CultureInfo.InvariantCulture))
                                 .ToArray();
+                                */
+                            var splitStrValues = internalNodesStr.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+
+                            var internalNode = new InternalNode()
+                            {
+                                Threshold = double.Parse(splitStrValues[3], CultureInfo.InvariantCulture),
+                                LeftValue = int.Parse(splitStrValues[0], CultureInfo.InvariantCulture),
+                                RightValue = int.Parse(splitStrValues[1], CultureInfo.InvariantCulture),
+                                FeatureIndex = int.Parse(splitStrValues[2], CultureInfo.InvariantCulture)
+                            };
+
+                            weak.InternalNode = internalNode;
+                            
                             weak.LeafValues = leafValuesStr
                                 .Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries)
                                 .Select(s => double.Parse(s, CultureInfo.InvariantCulture))
@@ -174,13 +189,25 @@ namespace MLFaceLib.HaarCascadeDetection
         public List<HaarWeakClassifier> WeakClassifiers { get; set; } = new List<HaarWeakClassifier>();
     }
 
+    public class InternalNode
+    {
+        public double Threshold { get; set; }
+        public int LeftValue { get; set; }
+        public int RightValue { get; set; }
+        public int FeatureIndex { get; set; }
+    }
+    
+
+
     /// <summary>
     /// Represents a weak classifier (node) in the cascade.
     /// Each weak classifier contains the parsed internal nodes, leaf values, and its Haar feature.
     /// </summary>
     public class HaarWeakClassifier
     {
-        public double[] InternalNodes { get; set; }
+        
+        public InternalNode InternalNode { get; set; }
+        //public double[] InternalNodes { get; set; }
         public double[] LeafValues { get; set; }
         public HaarFeature Feature { get; set; }
 
@@ -195,7 +222,9 @@ namespace MLFaceLib.HaarCascadeDetection
             double featureValue = Feature.Evaluate(integralImage, windowX, windowY, windowWidth, windowHeight, baseWidth, baseHeight);
             
             // For many cascades the threshold is stored in InternalNodes[2].
-            double threshold = (InternalNodes != null && InternalNodes.Length >= 3) ? InternalNodes[2] : 0;
+            //double threshold = (InternalNodes != null && InternalNodes.Length >= 3) ? InternalNodes[2] : 0;
+            var threshold = InternalNode.Threshold;
+            
             
             return (featureValue < threshold) ? LeafValues[0] : LeafValues[1];
         }
