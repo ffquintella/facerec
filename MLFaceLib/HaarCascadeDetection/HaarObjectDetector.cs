@@ -9,12 +9,12 @@ namespace  MLFaceLib.HaarCascadeDetection
 {
     public class HaarObjectDetector
     {
-        private HaarCascade _cascade;
+        private HaarCascadeClassifier _cascade;
 
         /// <summary>
         /// Creates a detector given a loaded Haar cascade.
         /// </summary>
-        public HaarObjectDetector(HaarCascade cascade)
+        public HaarObjectDetector(HaarCascadeClassifier cascade)
         {
             _cascade = cascade;
         }
@@ -47,9 +47,9 @@ namespace  MLFaceLib.HaarCascadeDetection
             {
                 int step = Math.Max(2, windowWidth / 10); // adjust step size for performance
 
-                for (int y = 0; y <= image.Height - windowHeight; y += step)
+                for (int y = 0; y <= image.Height - windowHeight - step ; y += step)
                 {
-                    for (int x = 0; x <= image.Width - windowWidth; x += step)
+                    for (int x = 0; x <= image.Width - windowWidth - step; x += step)
                     {
                         if (PassesCascade(integralImage, x, y, windowWidth, windowHeight, baseWidth, baseHeight))
                         {

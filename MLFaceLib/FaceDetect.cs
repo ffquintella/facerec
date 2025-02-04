@@ -6,12 +6,12 @@ namespace MLFaceLib;
 
 public static class FaceDetect
 {
-    private static HaarCascade cascade = HaarCascade.LoadEmbeded("MLFaceLib.OpenCVXMLs.haarcascade_frontalface_default.xml");
+    //private static HaarCascade cascade = HaarCascade.LoadEmbeded("MLFaceLib.OpenCVXMLs.haarcascade_frontalface_default.xml");
+    
+    private static HaarCascadeClassifier cascade = HaarCascadeClassifier.LoadFromEmbeddedResource("MLFaceLib.OpenCVXMLs.haarcascade_frontalface_default.xml");
     
     public static Rectangle[]? DetectFace(Image image)
     {
-        
-        //HaarCascade cascade = HaarCascade.LoadEmbeded("MLFaceLib.OpenCVXMLs.haarcascade_frontalface_default.xml");
         
         HaarCascadeDetection.HaarObjectDetector detector = new HaarCascadeDetection.HaarObjectDetector(cascade);
         
