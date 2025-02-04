@@ -192,7 +192,7 @@ private int frameCount = 0;
             
             if (IsRecognitionEnabled)
             {
-                var retangles = FaceDetect.DetectFace(new System.Drawing.Bitmap(ms));
+                var retangles = FaceDetect.DetectFace(image);
             }
             else
             {

@@ -15,7 +15,17 @@
       <PackageReference Include="MathNet.Numerics" Version="5.0.0" />
       <PackageReference Include="runtime.osx.10.10-x64.CoreCompat.System.Drawing" Version="6.0.5.128" />
       <PackageReference Include="SixLabors.ImageSharp" Version="3.1.6" />
-      <PackageReference Include="System.Drawing.Common" Version="9.0.1" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Folder Include="OpenCVXMLs\" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <None Remove="OpenCVXMLs\haarcascade_frontalface_default.xml" />
+      <EmbeddedResource Include="OpenCVXMLs\haarcascade_frontalface_default.xml">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </EmbeddedResource>
     </ItemGroup>
 
 </Project>

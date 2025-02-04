@@ -1,28 +1,31 @@
-using System.Drawing;
-using System.Drawing.Imaging;
 
+using MLFaceLib.HaarCascadeDetection;
+using SixLabors.ImageSharp;
 
 namespace MLFaceLib;
 
 public static class FaceDetect
 {
-    public static Rectangle[]? DetectFace(Bitmap image)
+    private static HaarCascade cascade = HaarCascade.LoadEmbeded("MLFaceLib.OpenCVXMLs.haarcascade_frontalface_default.xml");
+    
+    public static Rectangle[]? DetectFace(Image image)
     {
-
-        // Cria o detector (usa os parâmetros fixos definidos no construtor)
-        HaarObjectDetector detector = new HaarObjectDetector();
-
-        // Realiza a detecção
-        var detections = detector.DetectObjects(image);
+        
+        //HaarCascade cascade = HaarCascade.LoadEmbeded("MLFaceLib.OpenCVXMLs.haarcascade_frontalface_default.xml");
+        
+        HaarCascadeDetection.HaarObjectDetector detector = new HaarCascadeDetection.HaarObjectDetector(cascade);
+        
+        // Run detection.
+        List<Rectangle> faces = detector.DetectObjects(image, scaleFactor: 1.1);
 
         // Exibe os resultados
-        Console.WriteLine("Objetos detectados: " + detections.Count);
-        foreach (var rect in detections)
+        Console.WriteLine($"Detected {faces.Count} faces:");
+        foreach (var rect in faces)
         {
-            Console.WriteLine($"Posição: {rect.X}, {rect.Y}, Tamanho: {rect.Width}x{rect.Height}");
+            Console.WriteLine($"Face at ({rect.X}, {rect.Y}) with size {rect.Width}x{rect.Height}");
         }
         
-        return detections.ToArray();
+        return faces.ToArray();
 
     }
 }

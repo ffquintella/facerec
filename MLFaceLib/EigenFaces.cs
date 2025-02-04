@@ -3,6 +3,9 @@ using System.Drawing;
 using System.Linq;
 using System.Collections.Generic;
 using MathNet.Numerics.LinearAlgebra;
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.Advanced;
+using SixLabors.ImageSharp.PixelFormats;
 
 namespace MLFaceLib
 {
@@ -30,13 +33,24 @@ namespace MLFaceLib
 
         private Vector<double> LoadImageAsVector(string path)
         {
-            Bitmap bmp = new Bitmap(path);
-            double[] pixels = new double[bmp.Width * bmp.Height];
-            for (int x = 0; x < bmp.Width; x++)
-                for (int y = 0; y < bmp.Height; y++)
-                    pixels[y * bmp.Width + x] = bmp.GetPixel(x, y).R / 255.0;
+            using (Image<Rgba32> image = Image.Load<Rgba32>(path))
+            {
+                double[] pixels = new double[image.Width * image.Height];
+                for (int y = 0; y < image.Height; y++)
+                {
+                    // Get the pixel row memory and then obtain a span from it.
+                    var rowMemory = image.Frames.RootFrame.DangerousGetPixelRowMemory(y);
+                    var pixelRowSpan = rowMemory.Span;
+                    
+                    //Span<Rgba32> pixelRowSpan = image.GetPixelRowSpan(y);
+                    for (int x = 0; x < image.Width; x++)
+                    {
+                        pixels[y * image.Width + x] = pixelRowSpan[x].R / 255.0;
+                    }
+                }
 
-            return Vector<double>.Build.Dense(pixels);
+                return Vector<double>.Build.Dense(pixels);
+            }
         }
 
         private Vector<double> ComputeMeanImage(List<Vector<double>> images)
