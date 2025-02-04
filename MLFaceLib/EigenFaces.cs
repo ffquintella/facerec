@@ -9,8 +9,8 @@ namespace MLFaceLib
     public class EigenFaces
     {
         private List<Vector<double>> trainingImages = new List<Vector<double>>();
-        private Vector<double> meanImage;
-        private Matrix<double> eigenVectors;
+        private Vector<double>? meanImage;
+        private Matrix<double>? eigenVectors;
 
         public void Train(string[] imagePaths)
         {
@@ -61,6 +61,9 @@ namespace MLFaceLib
 
         private Vector<double> ProjectOntoEigenfaces(Vector<double> image)
         {
+            if(eigenVectors == null)
+                throw new InvalidOperationException("Train the model first");
+            
             return eigenVectors.Transpose() * image;
         }
 

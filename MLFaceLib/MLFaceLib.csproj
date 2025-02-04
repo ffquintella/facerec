@@ -4,6 +4,7 @@
         <TargetFramework>net9.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
+        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     </PropertyGroup>
 
     <ItemGroup>
@@ -12,8 +13,9 @@
 
     <ItemGroup>
       <PackageReference Include="MathNet.Numerics" Version="5.0.0" />
+      <PackageReference Include="runtime.osx.10.10-x64.CoreCompat.System.Drawing" Version="6.0.5.128" />
+      <PackageReference Include="SixLabors.ImageSharp" Version="3.1.6" />
       <PackageReference Include="System.Drawing.Common" Version="9.0.1" />
-      <PackageReference Include="System.Drawing.Primitives" Version="4.3.0" />
     </ItemGroup>
 
 </Project>

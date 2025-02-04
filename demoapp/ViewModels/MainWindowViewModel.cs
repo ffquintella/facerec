@@ -10,6 +10,7 @@ using Avalonia.Media.Imaging;
 using Avalonia.Platform;
 using FFmpeg.AutoGen;
 using FlashCap;
+using MLFaceLib;
 using ReactiveUI;
 using SeeShark;
 using SeeShark.Decode;
@@ -19,7 +20,6 @@ using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
 using SkiaSharp;
 using PixelFormat = SeeShark.PixelFormat;
-using PixelFormats = FlashCap.PixelFormats;
 using Rectangle = Avalonia.Controls.Shapes.Rectangle;
 
 namespace demoapp.ViewModels;
@@ -177,33 +177,32 @@ private int frameCount = 0;
     
     private async Task ProcessImageAsync(Frame frame)
     {
-        frameCount++;
+        //frameCount++;
         
         var converter = new FrameConverter(frame, PixelFormat.Rgba);
         var rgbaFrame = converter.Convert(frame);
 
-        if (IsRecognitionEnabled)
-        {
-         
-        }
-        else
-        {
+
             
-            using (Image<Rgba32> image = SixLabors.ImageSharp.Image.LoadPixelData<Rgba32>(rgbaFrame.RawData, rgbaFrame.Width, rgbaFrame.Height))
+        using (Image<Rgba32> image = SixLabors.ImageSharp.Image.LoadPixelData<Rgba32>(rgbaFrame.RawData, rgbaFrame.Width, rgbaFrame.Height))
+        {
+            var ms = new MemoryStream();
+            image.SaveAsJpeg(ms);
+            ms.Position = 0;
+            
+            if (IsRecognitionEnabled)
             {
-                
-                var ms = new MemoryStream();
-                image.SaveAsJpeg(ms);
-                ms.Position = 0;
-                Image = new Bitmap(ms);
-                
+                var retangles = FaceDetect.DetectFace(new System.Drawing.Bitmap(ms));
+            }
+            else
+            {
             }
             
-
-
+            Image = new Bitmap(ms);
         }
-
-
+            
+        
+        
     }
 
     public async Task SavePerson()
