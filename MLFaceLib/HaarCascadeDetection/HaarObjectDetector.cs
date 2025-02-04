@@ -79,7 +79,10 @@ namespace  MLFaceLib.HaarCascadeDetection
                 double stageSum = 0;
                 foreach (var weak in stage.WeakClassifiers)
                 {
-                    double vote = weak.Evaluate(integralImage, windowX, windowY, windowWidth, windowHeight, baseWidth, baseHeight);
+                    long[,] standardIntegral = IntegralHelper.ComputeStandardIntegralImage(integralImage);
+                    long[,] rotatedIntegral  = IntegralHelper.ComputeRotatedIntegralImage(integralImage);
+                    
+                    double vote = weak.Evaluate(standardIntegral, rotatedIntegral, windowX, windowY, windowWidth, windowHeight, baseWidth, baseHeight, _cascade.Features);
                     stageSum += vote;
                 }
                 if (stageSum < stage.StageThreshold)
