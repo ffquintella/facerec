@@ -180,8 +180,7 @@ public class MainWindowViewModel : ViewModelBase
         
         var converter = new FrameConverter(frame, PixelFormat.Rgba);
         var rgbaFrame = converter.Convert(frame);
-
-
+        
         using var bitmap = LoadRGBAImage(rgbaFrame.RawData.ToArray(), rgbaFrame.Width, rgbaFrame.Height);
 
 
@@ -245,26 +244,6 @@ public class MainWindowViewModel : ViewModelBase
 
         Image = new Bitmap(memoryStream);
         
-        
-        /*using (Image<Rgba32> image = SixLabors.ImageSharp.Image.LoadPixelData<Rgba32>(rgbaFrame.RawData, rgbaFrame.Width, rgbaFrame.Height))
-        {
-            var ms = new MemoryStream();
-            image.SaveAsJpeg(ms);
-            ms.Position = 0;
-            
-            if (IsRecognitionEnabled)
-            {
-                var detector = new FaceDetector(100);
-                
-                var retangles = detector.DetectFaces(image);
-            }
-            else
-            {
-            }
-            
-            Image = new Bitmap(ms);
-        }
-        */
         
         
     }
