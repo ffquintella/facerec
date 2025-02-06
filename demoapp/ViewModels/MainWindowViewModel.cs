@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing.Imaging;
 using System.IO;
@@ -42,7 +43,9 @@ public class MainWindowViewModel : ViewModelBase
         FFmpegManager.SetupFFmpeg (["/opt/homebrew/Cellar/ffmpeg/7.1_4/lib/"]);
         
         MainWindowViewModel.ActiveWindow = this;
-        
+
+        _ = Init();
+
     }
     
     
@@ -100,6 +103,8 @@ public class MainWindowViewModel : ViewModelBase
     
     private VideoDevice? _camera;
     
+    private Dictionary<int, string> _faceNames = new Dictionary<int, string>();
+    
     private static MainWindowViewModel ActiveWindow { get; set; }
 
     public async void EnableCamera()
@@ -130,6 +135,8 @@ public class MainWindowViewModel : ViewModelBase
     
     private bool _isSaveEnabled ;
     
+    
+    private FisherFaceRecognizer _faceRecognizer;
     
     private Rectangle[] _faces;
     
@@ -178,6 +185,47 @@ public class MainWindowViewModel : ViewModelBase
         IsRecognitionEnabled = false;
     }
     
+    public async Task Init()
+    {
+        
+        
+        var index_file = Path.Combine(baseFolder, "index.txt");
+        int i = 1;
+                    
+        if (File.Exists(index_file))
+        {
+            var lines = File.ReadAllLines(index_file);
+            foreach (var line in lines)
+            {
+                var parts = line.Split(";");
+                _faceNames.Add(i, parts[1]);
+                i++;
+            }
+
+        }else
+        {
+            File.Create(Path.Combine(baseFolder, "index.txt"));
+        }
+        
+        _faceRecognizer = new FisherFaceRecognizer(i, i);
+        
+        if (File.Exists(Path.Combine(baseFolder, "model.txt")))
+        {
+            _faceRecognizer.LoadModel(Path.Combine(baseFolder, "model.txt"));
+        }
+    }
+
+    private async Task SaveIndex()
+    {
+        var fileName = Path.Combine(baseFolder, "index.txt");
+        File.Delete(fileName);
+        
+        foreach (var faceName in _faceNames)
+        {
+            File.AppendAllText(fileName, $"{faceName.Key};{faceName.Value}\n");
+        }
+    }
+    
     
     private async Task ProcessImageAsync(Frame frame)
     {
@@ -202,7 +250,7 @@ public class MainWindowViewModel : ViewModelBase
             // Create a canvas to draw on the image
             using SKCanvas canvas = new SKCanvas(bitmap);
             
-/*
+            /*
             // Create a paint brush with color and stroke
             using SKPaint paint = new SKPaint
             {
@@ -230,6 +278,33 @@ public class MainWindowViewModel : ViewModelBase
                 // Draw the rectangle on the canvas
                 canvas.DrawRect(face.Box.ToSKRect(), paint2);
             }
+            
+            // Only ID the first face
+
+            if (faces.Length > 0)
+            {
+                var face = faces[0];
+                var width = face.Box.Width;
+                var height = face.Box.Height;
+                        
+                // Extract the sub-image
+                using SKBitmap extractedPiece = new SKBitmap(width, height);
+                        
+                SKRectI region = new SKRectI(face.Box.X, face.Box.Y, face.Box.X + width, face.Box.Y + height);
+                        
+                bitmap.ExtractSubset(extractedPiece, region);
+                        
+                using SKBitmap grayscaleBitmap = ConvertToGrayscale(extractedPiece);
+                        
+                using var resizedBitmap = grayscaleBitmap.Resize(new SKImageInfo(100, 100), SKFilterQuality.High);
+                
+                var prediction = _faceRecognizer.Recognize(resizedBitmap);
+                
+                Identity = _faceNames[prediction];
+                
+            }
+            
+
 
             if (_isSaveEnabled)
             {
@@ -252,6 +327,8 @@ public class MainWindowViewModel : ViewModelBase
                 else
                 {
                     int i = 1;
+                    if(_faceNames.Count > 0) i = _faceNames.Keys.Max() + 1;
+                    
                     foreach (var face in faces)
                     {
                         var width = face.Box.Width;
@@ -266,11 +343,17 @@ public class MainWindowViewModel : ViewModelBase
                         
                         using SKBitmap grayscaleBitmap = ConvertToGrayscale(extractedPiece);
                         
+                        using var resizedBitmap =   grayscaleBitmap.Resize(new SKImageInfo(100, 100), SKFilterQuality.High);
+                        
                         var destDir = Directory.CreateDirectory(Path.Combine(baseFolder, "faces"));
                         var destFile = Path.Combine(destDir.FullName, $"face_({PersonName})_{i}.png");
-                        SaveBitmapToFile(grayscaleBitmap, destFile);
+                        SaveBitmapToFile(resizedBitmap, destFile);
+                        _faceNames.Add(i, PersonName);
                         i++;
                     }
+                    
+                    _= SaveIndex();
+                    _ = TrainModel();
                 }
                 
                 
@@ -296,6 +379,22 @@ public class MainWindowViewModel : ViewModelBase
         Image = new Bitmap(memoryStream);
         
         
+        
+    }
+    
+    private async Task TrainModel()
+    {
+        // Load the images
+        var images = Directory.GetFiles(Path.Combine(baseFolder, "faces"), "*.png");
+
+        var recognizer = new FisherFaceRecognizer(numComponentsPCA: images.Length, numComponentsLDA: images.Length);
+        
+        var indexes = _faceNames.Keys.ToArray();
+        
+        recognizer.Train(images, indexes);
+        recognizer.SaveModel(Path.Combine(baseFolder, "model.txt"));
+        
+        _faceRecognizer = recognizer;
         
     }
     

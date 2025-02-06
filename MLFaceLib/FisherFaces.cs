@@ -1,3 +1,5 @@
+using SkiaSharp;
+
 namespace MLFaceLib;
 
 using System;
@@ -241,6 +243,65 @@ public class FisherFaceRecognizer
         this.numComponentsLDA = numComponentsLDA;
     }
 
+    public void Train(string[] imageFiles, string[] labels)
+    {
+        Train (imageFiles, labels.Select(int.Parse).ToArray());
+    }
+
+    public void Train(string[] imageFiles, int[] labels)
+    {
+        List<double[]> images = new List<double[]>();
+        
+        foreach (var imageFile in imageFiles)
+        {
+            var imageVector = LoadPngToDoubleArray(imageFile);
+            images.Add(imageVector);
+        }
+        
+        Train (images.ToArray(), labels);
+       
+    }
+    
+    private static double[] LoadBitmapToDoubleArray(SKBitmap bitmap)
+    {
+        var width = bitmap.Width;
+        var height = bitmap.Height;
+        int size = width * height;
+
+        // Create a 1D array to store grayscale values
+        double[] grayscaleArray = new double[size];
+
+        int index = 0;
+        for (int y = 0; y < height; y++)
+        {
+            for (int x = 0; x < width; x++)
+            {
+                SKColor color = bitmap.GetPixel(x, y);
+
+                // Convert RGB to grayscale intensity (normalized 0.0 - 1.0)
+                grayscaleArray[index] = (0.3 * color.Red + 0.59 * color.Green + 0.11 * color.Blue) / 255.0;
+                index++;
+            }
+        }
+
+        return grayscaleArray;
+    }
+    
+    /// <summary>
+    /// Loads a PNG file and converts it to a flattened double[] grayscale array.
+    /// </summary>
+    public static double[] LoadPngToDoubleArray(string filePath)
+    {
+        // Load the PNG image
+        using SKBitmap bitmap = SKBitmap.Decode(filePath);
+        if (bitmap == null)
+        {
+            throw new Exception("Failed to load image.");
+        }
+
+        return LoadBitmapToDoubleArray(bitmap);
+    }
+    
     /// <summary>
     /// Train the recognizer given an array of flattened images and their corresponding labels.
     /// </summary>
@@ -490,6 +551,11 @@ public class FisherFaceRecognizer
 
         // Save training labels.
         trainingLabels = (int[])labels.Clone();
+    }
+
+    public int Recognize(SKBitmap image)
+    {
+        return Recognize(LoadBitmapToDoubleArray(image));
     }
 
     /// <summary>
