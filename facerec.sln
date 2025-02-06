@@ -10,6 +10,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MLFaceLib", "MLFaceLib\MLFa
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FaceONNX", "..\FaceONNX\netstandard\FaceONNX\FaceONNX.csproj", "{41368F1B-61C1-4CBB-84DB-FCBF992A16BC}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SkiaDrawing", "..\SkiaDrawing\SkiaDrawing\SkiaDrawing.csproj", "{D970F83C-C2E7-4DD2-9112-F32DA430B0CE}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -36,5 +38,9 @@ Global
 		{41368F1B-61C1-4CBB-84DB-FCBF992A16BC}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{41368F1B-61C1-4CBB-84DB-FCBF992A16BC}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{41368F1B-61C1-4CBB-84DB-FCBF992A16BC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D970F83C-C2E7-4DD2-9112-F32DA430B0CE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D970F83C-C2E7-4DD2-9112-F32DA430B0CE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D970F83C-C2E7-4DD2-9112-F32DA430B0CE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D970F83C-C2E7-4DD2-9112-F32DA430B0CE}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

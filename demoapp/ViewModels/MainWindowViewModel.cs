@@ -8,6 +8,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Avalonia.Media.Imaging;
 using Avalonia.Platform;
+using FaceONNX;
 using FFmpeg.AutoGen;
 using FlashCap;
 using MLFaceLib;
@@ -16,8 +17,6 @@ using SeeShark;
 using SeeShark.Decode;
 using SeeShark.Device;
 using SeeShark.FFmpeg;
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.PixelFormats;
 using SkiaSharp;
 using PixelFormat = SeeShark.PixelFormat;
 using Rectangle = Avalonia.Controls.Shapes.Rectangle;
@@ -188,15 +187,18 @@ public class MainWindowViewModel : ViewModelBase
 
         if (IsRecognitionEnabled)
         {
-            var detector = new FaceRectangleDetector();
-                
-            var retangles = detector.DetectFaceRectangles(bitmap);
+            //var detector = new FaceRectangleDetector();
+            //var retangles = detector.DetectFaceRectangles(bitmap);
+            
+            var dnnDetector = new FaceDetector();
+
+            var faces = dnnDetector.Forward(new SkiaDrawing.Bitmap(bitmap));
             
             
             // Create a canvas to draw on the image
             using SKCanvas canvas = new SKCanvas(bitmap);
             
-
+/*
             // Create a paint brush with color and stroke
             using SKPaint paint = new SKPaint
             {
@@ -209,6 +211,20 @@ public class MainWindowViewModel : ViewModelBase
             {
                 // Draw the rectangle on the canvas
                 canvas.DrawRect(retangle, paint);
+            }
+            */
+            
+            using SKPaint paint2 = new SKPaint
+            {
+                Color = SKColors.Yellow,      // Rectangle color
+                Style = SKPaintStyle.Stroke, // Stroke style (outline)
+                StrokeWidth = 5           // Thickness of the border
+            };
+            
+            foreach (var face in faces)
+            {
+                // Draw the rectangle on the canvas
+                canvas.DrawRect(face.Box.ToSKRect(), paint2);
             }
             
             
