@@ -1,0 +1,16 @@
+Explanation
+
+    Skin–Color Masking:
+    The detector uses a relaxed YCrCb–style skin–color threshold so that areas with occlusions (beard, glasses) are less likely to be missed.
+
+    Morphological Closing with a Larger Kernel:
+    A larger (5×5) kernel is used for dilation and erosion to join nearby skin areas. This helps to “bridge” gaps introduced by occluding features.
+
+    Hole Filling:
+    A custom hole–filling method examines false–valued regions (holes) that are completely enclosed within a candidate region. If these holes are small (below a defined maximum size), they are filled, thereby “recovering” parts of the face that might otherwise be missed.
+
+    Connected Component Analysis and Bounding Box Extraction:
+    Only connected regions with sufficient area are kept, and their bounding rectangles are computed and slightly expanded (by 10%) to cover the whole face.
+
+    Filtering:
+    The candidate rectangles are filtered by aspect ratio and minimum size to reduce false positives.
