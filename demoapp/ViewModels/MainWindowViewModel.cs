@@ -26,7 +26,7 @@ namespace demoapp.ViewModels;
 
 public class MainWindowViewModel : ViewModelBase
 {
-private int frameCount = 0;
+    private int frameCount = 0;
     
     public string VideoRecognition  { get; } = "Sample Video Recognition APP";
     
@@ -183,8 +183,54 @@ private int frameCount = 0;
         var rgbaFrame = converter.Convert(frame);
 
 
+        using var bitmap = LoadRGBAImage(rgbaFrame.RawData.ToArray(), rgbaFrame.Width, rgbaFrame.Height);
+
+
+        if (IsRecognitionEnabled)
+        {
+            var detector = new FaceRectangleDetector();
+                
+            var retangles = detector.DetectFaceRectangles(bitmap);
             
-        using (Image<Rgba32> image = SixLabors.ImageSharp.Image.LoadPixelData<Rgba32>(rgbaFrame.RawData, rgbaFrame.Width, rgbaFrame.Height))
+            
+            // Create a canvas to draw on the image
+            using SKCanvas canvas = new SKCanvas(bitmap);
+            
+
+            // Create a paint brush with color and stroke
+            using SKPaint paint = new SKPaint
+            {
+                Color = SKColors.Red,      // Rectangle color
+                Style = SKPaintStyle.Stroke, // Stroke style (outline)
+                StrokeWidth = 5           // Thickness of the border
+            };
+
+            foreach (var retangle in retangles)
+            {
+                // Draw the rectangle on the canvas
+                canvas.DrawRect(retangle, paint);
+            }
+            
+            
+        }
+        else
+        {
+            
+        }
+        
+        // Convert SKBitmap to JPEG in MemoryStream
+        using MemoryStream memoryStream = new MemoryStream();
+        using SKImage image = SKImage.FromBitmap(bitmap);
+        using SKData encodedData = image.Encode(SKEncodedImageFormat.Jpeg, 90); // 90 = Quality
+
+        // Write to memory stream
+        encodedData.SaveTo(memoryStream);
+        memoryStream.Position = 0;
+
+        Image = new Bitmap(memoryStream);
+        
+        
+        /*using (Image<Rgba32> image = SixLabors.ImageSharp.Image.LoadPixelData<Rgba32>(rgbaFrame.RawData, rgbaFrame.Width, rgbaFrame.Height))
         {
             var ms = new MemoryStream();
             image.SaveAsJpeg(ms);
@@ -192,7 +238,9 @@ private int frameCount = 0;
             
             if (IsRecognitionEnabled)
             {
-                var retangles = FaceDetect.DetectFace(image);
+                var detector = new FaceDetector(100);
+                
+                var retangles = detector.DetectFaces(image);
             }
             else
             {
@@ -200,10 +248,39 @@ private int frameCount = 0;
             
             Image = new Bitmap(ms);
         }
-            
+        */
         
         
     }
+
+    public static SKBitmap LoadRGBAImage(byte[] rgbaBytes, int width, int height)
+    {
+        if (rgbaBytes == null || rgbaBytes.Length != width * height * 4)
+            throw new ArgumentException("Invalid byte array size for given dimensions.");
+
+        SKBitmap bitmap = new SKBitmap(width, height, SKColorType.Rgba8888, SKAlphaType.Premul);
+
+        // Copy bytes into the bitmap's pixel buffer.
+        //bitmap.InstallPixels(bitmap.Info, rgbaBytes, width * 4);
+        
+
+        // Pin the array so SkiaSharp can use it
+        GCHandle handle = GCHandle.Alloc(rgbaBytes, GCHandleType.Pinned);
+        IntPtr ptr = handle.AddrOfPinnedObject();
+
+        // Install the pixels from the byte array
+        if (!bitmap.InstallPixels(bitmap.Info, ptr, bitmap.Info.RowBytes, null, null))
+        {
+            Console.WriteLine("Failed to install pixels.");
+        }
+
+        // Free the pinned memory after use
+        handle.Free();
+        
+
+        return bitmap;
+    }
+
 
     public async Task SavePerson()
     {
