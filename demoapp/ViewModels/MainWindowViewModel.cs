@@ -7,11 +7,14 @@ using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 using Avalonia.Media.Imaging;
+using Avalonia.Threading;
 using Avalonia.Platform;
 using FaceONNX;
 using FFmpeg.AutoGen;
 using FlashCap;
 using MLFaceLib;
+using MsBox.Avalonia;
+using MsBox.Avalonia.Enums;
 using ReactiveUI;
 using SeeShark;
 using SeeShark.Decode;
@@ -26,6 +29,8 @@ namespace demoapp.ViewModels;
 public class MainWindowViewModel : ViewModelBase
 {
     private int frameCount = 0;
+
+    private string baseFolder = "/Users/felipe/tmp";
     
     public string VideoRecognition  { get; } = "Sample Video Recognition APP";
     
@@ -225,6 +230,52 @@ public class MainWindowViewModel : ViewModelBase
                 // Draw the rectangle on the canvas
                 canvas.DrawRect(face.Box.ToSKRect(), paint2);
             }
+
+            if (_isSaveEnabled)
+            {
+                // Let's save the image to the disk
+                
+                // First, let's check if we have a name
+                if(string.IsNullOrEmpty(PersonName))
+                {
+                    _= Dispatcher.UIThread.Invoke(async () =>
+                    {
+                        var box = MessageBoxManager
+                            .GetMessageBoxStandard("ERRO", "Por favor entre com o nome da pessoa.",
+                                ButtonEnum.Ok); 
+                        
+                        await box.ShowAsync();
+                        
+                    });
+
+                }
+                else
+                {
+                    int i = 1;
+                    foreach (var face in faces)
+                    {
+                        var width = face.Box.Width;
+                        var height = face.Box.Height;
+                        
+                        // Extract the sub-image
+                        using SKBitmap extractedPiece = new SKBitmap(width, height);
+                        
+                        SKRectI region = new SKRectI(face.Box.X, face.Box.Y, face.Box.X + width, face.Box.Y + height);
+                        
+                        bitmap.ExtractSubset(extractedPiece, region);
+                        
+                        using SKBitmap grayscaleBitmap = ConvertToGrayscale(extractedPiece);
+                        
+                        var destDir = Directory.CreateDirectory(Path.Combine(baseFolder, "faces"));
+                        var destFile = Path.Combine(destDir.FullName, $"face_({PersonName})_{i}.png");
+                        SaveBitmapToFile(grayscaleBitmap, destFile);
+                        i++;
+                    }
+                }
+                
+                
+                _isSaveEnabled = false;
+            }
             
             
         }
@@ -246,6 +297,46 @@ public class MainWindowViewModel : ViewModelBase
         
         
         
+    }
+    
+    /// <summary>
+    /// Converts an SKBitmap to grayscale.
+    /// </summary>
+    private static SKBitmap ConvertToGrayscale(SKBitmap bitmap)
+    {
+        SKBitmap grayBitmap = new SKBitmap(bitmap.Width, bitmap.Height);
+
+        using (SKCanvas canvas = new SKCanvas(grayBitmap))
+        using (SKPaint paint = new SKPaint())
+        {
+            // Use a color matrix filter for grayscale conversion
+            paint.ColorFilter = SKColorFilter.CreateColorMatrix(new float[]
+            {
+                0.3f, 0.59f, 0.11f, 0, 0,  // Red
+                0.3f, 0.59f, 0.11f, 0, 0,  // Green
+                0.3f, 0.59f, 0.11f, 0, 0,  // Blue
+                0,    0,     0,     1, 0   // Alpha
+            });
+
+            // Draw the original image onto the new canvas using the grayscale filter
+            canvas.DrawBitmap(bitmap, 0, 0, paint);
+        }
+
+        return grayBitmap;
+    }
+    
+    
+    /// <summary>
+    /// Saves an SKBitmap to a file.
+    /// </summary>
+    private static void SaveBitmapToFile(SKBitmap bitmap, string filename)
+    {
+        using (SKImage image = SKImage.FromBitmap(bitmap))
+        using (SKData data = image.Encode(SKEncodedImageFormat.Png, 100)) // PNG format, quality 100
+        using (FileStream stream = File.OpenWrite(filename))
+        {
+            data.SaveTo(stream);
+        }
     }
 
     public static SKBitmap LoadRGBAImage(byte[] rgbaBytes, int width, int height)
