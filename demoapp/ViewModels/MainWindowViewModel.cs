@@ -256,8 +256,12 @@ public class MainWindowViewModel : ViewModelBase
                 using var resizedBitmap = grayscaleBitmap.Resize(new SKImageInfo(100, 100), SKFilterQuality.High);
                 
                 var prediction = await _faceRecognizer.Predict(resizedBitmap);
-                
-                Identity = prediction.Item1;
+
+                if (prediction.Item1 is null)
+                {
+                    Identity = "Desconhecido";
+                }
+                else Identity = prediction.Item1;
                 
             }
             

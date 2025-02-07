@@ -169,6 +169,8 @@ namespace MLFaceLib
         #region SAVE and LOAD
         public async Task SaveToFileAsync(string filePath)
         {
+            if(File.Exists(filePath)) File.Delete(filePath);
+            
             using (StreamWriter writer = new StreamWriter(filePath))
             {
                 var serializedObject = JsonSerializer.Serialize(this);

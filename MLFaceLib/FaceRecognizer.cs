@@ -53,14 +53,22 @@ public class FaceRecognizer
         await FaceEmbeddings.SaveToFileAsync(dataFilePath);
     }
 
-    public async Task<(string,float)> Predict(SKBitmap image)
+    public async Task<(string?,float)> Predict(SKBitmap image)
     {
-        var embedding = GetEmbedding(image);
-        var proto = FaceEmbeddings.FromSimilarity(embedding);
-        var label = proto.Item1;
-        var similarity = proto.Item2;
-
-        return (label, similarity);
+        try
+        {
+            var embedding = GetEmbedding(image);
+            var proto = FaceEmbeddings.FromSimilarity(embedding);
+            var label = proto.Item1;
+            var similarity = proto.Item2; 
+            
+            return (label, similarity);
+            
+        }catch(Exception e)
+        {
+            return (null, 0);
+        }
+        
     }
     
     public async Task Load(string dataFilePath)
