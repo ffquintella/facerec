@@ -76,13 +76,22 @@ public class FaceRecognizer
         if(File.Exists(dataFilePath)) await FaceEmbeddings.LoadFromFileAsync(dataFilePath);
         else throw new Exception("Data file not found.");
     }
-    
-    
-    static float[] GetEmbedding(SKBitmap image)
+
+
+    static float[] GetEmbedding(SKBitmap image, bool detectFace = false)
     {
         var array = GetImageFloatArray(image);
-        var rectangles = faceDetector.Forward(array);
-        var rectangle = rectangles.FirstOrDefault().Box;
+
+        Rectangle rectangle = new Rectangle();
+        
+        if (detectFace){
+            var rectangles = faceDetector.Forward(array);
+            rectangle = rectangles.FirstOrDefault().Box;
+        }
+        else
+        {
+            rectangle = new Rectangle(0, 0, image.Width, image.Height);
+        }
 
         if (!rectangle.IsEmpty)
         {
