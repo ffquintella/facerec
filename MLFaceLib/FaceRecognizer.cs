@@ -3,6 +3,7 @@
 using FaceONNX;
 using SkiaDrawing;
 using SkiaSharp;
+using UMapx.Core;
 
 namespace MLFaceLib;
 
@@ -10,6 +11,7 @@ public class FaceRecognizer
 {
     
     static FaceDetector faceDetector;
+    static FaceDepthClassifier faceDepthClassifier;
     static Face68LandmarksExtractor _faceLandmarksExtractor;
     static FaceEmbedder _faceEmbedder;
     
@@ -18,6 +20,7 @@ public class FaceRecognizer
     
     public FaceRecognizer()
     {
+        faceDepthClassifier = new FaceDepthClassifier();
         faceDetector = new FaceDetector();
         _faceLandmarksExtractor = new Face68LandmarksExtractor();
         _faceEmbedder = new FaceEmbedder();
@@ -57,6 +60,13 @@ public class FaceRecognizer
     {
         try
         {
+            /*
+            var spoof = faceDepthClassifier.Forward(new Bitmap(image));
+            var max = Matrice.Max(spoof, out int realPredict);
+            var realLabel = FaceDepthClassifier.Labels[realPredict];
+            if(realLabel == "Fake") return ("fake", 0);
+            */
+            
             var embedding = GetEmbedding(image);
             var proto = FaceEmbeddings.FromSimilarity(embedding);
             var label = proto.Item1;
