@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Text.Json;
 using UMapx.Core;
 
 namespace MLFaceLib
@@ -96,12 +97,12 @@ namespace MLFaceLib
         /// <summary>
         /// Gets or sets vectors.
         /// </summary>
-        public List<float[]> Vectors { get; }
+        public List<float[]> Vectors { get; set; }
 
         /// <summary>
         /// Gets or sets labels.
         /// </summary>
-        public List<string> Labels { get; }
+        public List<string> Labels { get; set; }
 
         #endregion
 
@@ -170,33 +171,24 @@ namespace MLFaceLib
         {
             using (StreamWriter writer = new StreamWriter(filePath))
             {
-                for (int i = 0; i < Vectors.Count; i++)
-                {
-                    string vectorString = string.Join(",", Vectors[i]);
-                    await writer.WriteLineAsync($"{Labels[i]}:{vectorString}");
-                }
+                var serializedObject = JsonSerializer.Serialize(this);
+                await writer.WriteAsync(serializedObject);
             }
         }
 
         public async Task LoadFromFileAsync(string filePath)
         {
-            Vectors.Clear();
-            Labels.Clear();
-
             using (StreamReader reader = new StreamReader(filePath))
             {
                 if(reader == null) throw new Exception("Data file not found.");
-                string? line;
-                while ((line = await reader.ReadLineAsync()) != null)
+                var jsonString = await reader.ReadToEndAsync();
+                var deserializedObject = JsonSerializer.Deserialize<Embeddings>(jsonString);
+                if (deserializedObject != null)
                 {
-                    var parts = line.Split(':');
-                    if (parts.Length == 2)
-                    {
-                        string label = parts[0];
-                        float[] vector = parts[1].Split(',').Select(float.Parse).ToArray();
-                        Vectors.Add(vector);
-                        Labels.Add(label);
-                    }
+                    Vectors.Clear();
+                    Labels.Clear();
+                    Vectors.AddRange(deserializedObject.Vectors);
+                    Labels.AddRange(deserializedObject.Labels);
                 }
             }
         }
