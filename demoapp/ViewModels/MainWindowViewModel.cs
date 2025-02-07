@@ -103,8 +103,6 @@ public class MainWindowViewModel : ViewModelBase
     
     private VideoDevice? _camera;
     
-    private Dictionary<int, string> _faceNames = new Dictionary<int, string>();
-    
     private static MainWindowViewModel ActiveWindow { get; set; }
 
     public async void EnableCamera()
@@ -136,7 +134,7 @@ public class MainWindowViewModel : ViewModelBase
     private bool _isSaveEnabled ;
     
     
-    private FisherFaceRecognizer _faceRecognizer;
+    private FaceRecognizer _faceRecognizer;
     
     private Rectangle[] _faces;
     
@@ -187,42 +185,18 @@ public class MainWindowViewModel : ViewModelBase
     
     public async Task Init()
     {
+        _faceRecognizer = new FaceRecognizer();
         
-        
-        var index_file = Path.Combine(baseFolder, "index.txt");
-        int i = 1;
-                    
-        if (File.Exists(index_file))
+        if (File.Exists(Path.Combine(baseFolder, "facedata.fdt")))
         {
-            var lines = File.ReadAllLines(index_file);
-            foreach (var line in lines)
+            _faceRecognizer.Load(Path.Combine(baseFolder, "facedata.fdt"));
+        }
+        else
+        {
+            if(Directory.Exists(Path.Combine(baseFolder, "faces")))
             {
-                var parts = line.Split(";");
-                _faceNames.Add(i, parts[1]);
-                i++;
+                _ = TrainModel();
             }
-
-        }else
-        {
-            File.Create(Path.Combine(baseFolder, "index.txt"));
-        }
-        
-        _faceRecognizer = new FisherFaceRecognizer(i, i);
-        
-        if (File.Exists(Path.Combine(baseFolder, "model.txt")))
-        {
-            _faceRecognizer.LoadModel(Path.Combine(baseFolder, "model.txt"));
-        }
-    }
-
-    private async Task SaveIndex()
-    {
-        var fileName = Path.Combine(baseFolder, "index.txt");
-        File.Delete(fileName);
-        
-        foreach (var faceName in _faceNames)
-        {
-            File.AppendAllText(fileName, $"{faceName.Key};{faceName.Value}\n");
         }
     }
     
@@ -239,8 +213,6 @@ public class MainWindowViewModel : ViewModelBase
 
         if (IsRecognitionEnabled)
         {
-            //var detector = new FaceRectangleDetector();
-            //var retangles = detector.DetectFaceRectangles(bitmap);
             
             var dnnDetector = new FaceDetector();
 
@@ -250,21 +222,6 @@ public class MainWindowViewModel : ViewModelBase
             // Create a canvas to draw on the image
             using SKCanvas canvas = new SKCanvas(bitmap);
             
-            /*
-            // Create a paint brush with color and stroke
-            using SKPaint paint = new SKPaint
-            {
-                Color = SKColors.Red,      // Rectangle color
-                Style = SKPaintStyle.Stroke, // Stroke style (outline)
-                StrokeWidth = 5           // Thickness of the border
-            };
-
-            foreach (var retangle in retangles)
-            {
-                // Draw the rectangle on the canvas
-                canvas.DrawRect(retangle, paint);
-            }
-            */
             
             using SKPaint paint2 = new SKPaint
             {
@@ -298,9 +255,9 @@ public class MainWindowViewModel : ViewModelBase
                         
                 using var resizedBitmap = grayscaleBitmap.Resize(new SKImageInfo(100, 100), SKFilterQuality.High);
                 
-                var prediction = _faceRecognizer.Recognize(resizedBitmap);
+                var prediction = await _faceRecognizer.Predict(resizedBitmap);
                 
-                Identity = _faceNames[prediction];
+                Identity = prediction.Item1;
                 
             }
             
@@ -309,7 +266,6 @@ public class MainWindowViewModel : ViewModelBase
             if (_isSaveEnabled)
             {
                 // Let's save the image to the disk
-                
                 // First, let's check if we have a name
                 if(string.IsNullOrEmpty(PersonName))
                 {
@@ -326,33 +282,36 @@ public class MainWindowViewModel : ViewModelBase
                 }
                 else
                 {
+                    // Since we only have one name just save the first face
                     int i = 1;
-                    if(_faceNames.Count > 0) i = _faceNames.Keys.Max() + 1;
+                    var face = faces[0];
                     
-                    foreach (var face in faces)
+                    var width = face.Box.Width;
+                    var height = face.Box.Height;
+                    
+                    // Extract the sub-image
+                    using SKBitmap extractedPiece = new SKBitmap(width, height);
+                    
+                    SKRectI region = new SKRectI(face.Box.X, face.Box.Y, face.Box.X + width, face.Box.Y + height);
+                    
+                    bitmap.ExtractSubset(extractedPiece, region);
+                    
+                    using SKBitmap grayscaleBitmap = ConvertToGrayscale(extractedPiece);
+                    
+                    using var resizedBitmap =   grayscaleBitmap.Resize(new SKImageInfo(100, 100), SKFilterQuality.High);
+                    
+                    var destDir = Directory.CreateDirectory(Path.Combine(baseFolder, "faces"));
+                    
+                    var destFile = Path.Combine(destDir.FullName, $"face_({PersonName})_{i}.png");
+                    
+                    while(File.Exists(destFile))
                     {
-                        var width = face.Box.Width;
-                        var height = face.Box.Height;
-                        
-                        // Extract the sub-image
-                        using SKBitmap extractedPiece = new SKBitmap(width, height);
-                        
-                        SKRectI region = new SKRectI(face.Box.X, face.Box.Y, face.Box.X + width, face.Box.Y + height);
-                        
-                        bitmap.ExtractSubset(extractedPiece, region);
-                        
-                        using SKBitmap grayscaleBitmap = ConvertToGrayscale(extractedPiece);
-                        
-                        using var resizedBitmap =   grayscaleBitmap.Resize(new SKImageInfo(100, 100), SKFilterQuality.High);
-                        
-                        var destDir = Directory.CreateDirectory(Path.Combine(baseFolder, "faces"));
-                        var destFile = Path.Combine(destDir.FullName, $"face_({PersonName})_{i}.png");
-                        SaveBitmapToFile(resizedBitmap, destFile);
-                        _faceNames.Add(i, PersonName);
                         i++;
+                        destFile = Path.Combine(destDir.FullName, $"face_({PersonName})_{i}.png");
                     }
                     
-                    _= SaveIndex();
+                    SaveBitmapToFile(resizedBitmap, destFile);
+                    
                     _ = TrainModel();
                 }
                 
@@ -384,17 +343,12 @@ public class MainWindowViewModel : ViewModelBase
     
     private async Task TrainModel()
     {
-        // Load the images
-        var images = Directory.GetFiles(Path.Combine(baseFolder, "faces"), "*.png");
-
-        var recognizer = new FisherFaceRecognizer(numComponentsPCA: images.Length, numComponentsLDA: images.Length);
         
-        var indexes = _faceNames.Keys.ToArray();
+        _faceRecognizer.Clear();
         
-        recognizer.Train(images, indexes);
-        recognizer.SaveModel(Path.Combine(baseFolder, "model.txt"));
+        await _faceRecognizer.TrainAsync(Path.Combine(baseFolder, "faces"));
         
-        _faceRecognizer = recognizer;
+        await _faceRecognizer.SaveModel(Path.Combine(baseFolder, "facedata.fdt"));
         
     }
     

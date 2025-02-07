@@ -166,27 +166,28 @@ namespace MLFaceLib
         #endregion
         
         #region SAVE and LOAD
-        public void SaveToFile(string filePath)
+        public async Task SaveToFileAsync(string filePath)
         {
             using (StreamWriter writer = new StreamWriter(filePath))
             {
                 for (int i = 0; i < Vectors.Count; i++)
                 {
                     string vectorString = string.Join(",", Vectors[i]);
-                    writer.WriteLine($"{Labels[i]}:{vectorString}");
+                    await writer.WriteLineAsync($"{Labels[i]}:{vectorString}");
                 }
             }
         }
 
-        public void LoadFromFile(string filePath)
+        public async Task LoadFromFileAsync(string filePath)
         {
             Vectors.Clear();
             Labels.Clear();
 
             using (StreamReader reader = new StreamReader(filePath))
             {
-                string line;
-                while ((line = reader.ReadLine()) != null)
+                if(reader == null) throw new Exception("Data file not found.");
+                string? line;
+                while ((line = await reader.ReadLineAsync()) != null)
                 {
                     var parts = line.Split(':');
                     if (parts.Length == 2)

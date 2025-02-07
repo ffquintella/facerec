@@ -23,20 +23,50 @@ public class FaceRecognizer
         _faceEmbedder = new FaceEmbedder();
     }
     
-    public Task TrainAsync(string imagePath)
+    public void Clear()
     {
-        var fits = Directory.GetFiles(imagePath);
+        FaceEmbeddings.Clear();
+    }
+    
+    
+    public async Task TrainAsync(string imageDirPath)
+    {
+        // Load the images
+        var images = Directory.GetFiles(imageDirPath, "*.png");
         
-        foreach (var fit in fits)
+        foreach (var fit in images)
         {
             using var theImage = SKBitmap.Decode(fit);
             var embedding = GetEmbedding(theImage);
-            var name = Path.GetFileNameWithoutExtension(fit);
+            
+            var fileName = Path.GetFileNameWithoutExtension(fit);
+            
+            var name = fileName.Split('(')[1].Split(')')[0].Trim();
+            
             FaceEmbeddings.Add(embedding, name);
 
         }
-        
-        return Task.CompletedTask;
+    }
+    
+    public async Task SaveModel(string dataFilePath)
+    {
+        await FaceEmbeddings.SaveToFileAsync(dataFilePath);
+    }
+
+    public async Task<(string,float)> Predict(SKBitmap image)
+    {
+        var embedding = GetEmbedding(image);
+        var proto = FaceEmbeddings.FromSimilarity(embedding);
+        var label = proto.Item1;
+        var similarity = proto.Item2;
+
+        return (label, similarity);
+    }
+    
+    public async Task Load(string dataFilePath)
+    {
+        if(File.Exists(dataFilePath)) await FaceEmbeddings.LoadFromFileAsync(dataFilePath);
+        else throw new Exception("Data file not found.");
     }
     
     
