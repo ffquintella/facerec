@@ -16,12 +16,43 @@
         <vm:MainWindowViewModel/>
     </Design.DataContext>
 
-    <Grid RowDefinitions="Auto,Auto,*,Auto" HorizontalAlignment="Stretch" ColumnDefinitions="*">
+    <Grid RowDefinitions="*">
+        <Grid Grid.Row="0" Background="{Binding BackgroundBrush}" ZIndex="0">
+        </Grid>
+        <Grid Grid.Row="0" RowDefinitions="Auto,Auto,*,Auto" HorizontalAlignment="Stretch" ColumnDefinitions="*" ZIndex="10">
         <!--HEADER-->
         <TextBlock Grid.Row="0" Grid.Column="0" Text="{Binding VideoRecognition}" Classes="Header" HorizontalAlignment="Center"/>
-        <StackPanel Grid.Row="1">
-            <TextBlock Text="ID: "/> <TextBlock Text="{Binding Identity}"/>
-        </StackPanel>    
+        <Grid Grid.Row="1" ColumnDefinitions="Auto,*,Auto">
+            <StackPanel Grid.Column="0" Orientation="Vertical" Margin="10 0 0 0 ">
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="ID: "/> <TextBlock Text="{Binding Identity}"/>
+                </StackPanel>   
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="Similarity: "/> <TextBlock Text="{Binding Similarity}"/>
+                </StackPanel> 
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="Source: "/> <TextBlock Text="{Binding Source}"/>
+                </StackPanel> 
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="Confidence: "/> <TextBlock Text="{Binding Confidence}"/>
+                </StackPanel> 
+            </StackPanel>
+            <StackPanel Grid.Column="2" Orientation="Vertical" Margin="0 0 10 0 ">
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="R: "/> <TextBlock Text="{Binding R}"/>
+                </StackPanel>   
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="G: "/> <TextBlock Text="{Binding G}"/>
+                </StackPanel> 
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="B: "/> <TextBlock Text="{Binding B}"/>
+                </StackPanel> 
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="NC: "/> <TextBlock Text="{Binding NC}"/>
+                </StackPanel> 
+            </StackPanel>
+        </Grid>
+
         
         <!--VIDEO-->
         <!-- Source="{Binding VideoSource}" -->
@@ -39,11 +70,15 @@
             <Button Content="Start" Command="{Binding RecogStart }" Margin="5"/>
             <Button Content="Stop" Command="{Binding RecogStop   }" Margin="5"/>
             <Button Content="Disable" Command="{Binding DisableCamera}" Margin="5"/>
+            <Button Content="Color Verify" Command="{Binding ColorVerify}" Margin="5"/>
             <TextBlock Text="Person name:" Margin="15 10 5 5 "/>
             <TextBox Text="{Binding PersonName}" Margin=" 5 " Width="80"/>
             <Button Content="Save" Command="{Binding SavePerson}" Margin="5"/>
         </StackPanel>
         
     </Grid>
+    </Grid>
+    
+    
 
 </Window>

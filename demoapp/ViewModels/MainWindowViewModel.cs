@@ -7,6 +7,7 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
+using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using Avalonia.Threading;
 using Avalonia.Platform;
@@ -65,6 +66,46 @@ public class MainWindowViewModel : ViewModelBase
         set => this.RaiseAndSetIfChanged(ref _isRecognitionEnabled, value);
     }
     
+    private IBrush _backgroundBrush = new SolidColorBrush(Color.FromRgb(0, 0, 0));
+    
+    public IBrush BackgroundBrush
+    {
+        get => _backgroundBrush;
+        set => this.RaiseAndSetIfChanged(ref _backgroundBrush, value);
+    }
+
+    private string _r;
+    
+    public string R
+    {
+        get => _r;
+        set => this.RaiseAndSetIfChanged(ref _r, value);
+    }
+    
+    private string _g;
+    
+    public string G
+    {
+        get => _g;
+        set => this.RaiseAndSetIfChanged(ref _g, value);
+    }
+    
+    private string _b;
+    
+    public string B
+    {
+        get => _b;
+        set => this.RaiseAndSetIfChanged(ref _b, value);
+    }
+    
+    private string _nc;
+    
+    public string NC
+    {
+        get => _nc;
+        set => this.RaiseAndSetIfChanged(ref _nc, value);
+    }
+    
     private Bitmap _image;
     
     public Bitmap Image
@@ -89,12 +130,36 @@ public class MainWindowViewModel : ViewModelBase
         set => this.RaiseAndSetIfChanged(ref _personName, value);
     }
     
+    private string _source = "---";
+    
+    public string Source
+    {
+        get => _source;
+        set => this.RaiseAndSetIfChanged(ref _source, value);
+    }
+    
+    private string _similarity;
+    
+    public string Similarity
+    {
+        get => _similarity;
+        set => this.RaiseAndSetIfChanged(ref _similarity, value);
+    }
+    
     private string _identity;
     
     public string Identity
     {
         get => _identity;
         set => this.RaiseAndSetIfChanged(ref _identity, value);
+    }
+    
+    private string _confidence;
+    
+    public string Confidence
+    {
+        get => _confidence;
+        set => this.RaiseAndSetIfChanged(ref _confidence, value);
     }
 
     private CaptureDevice? _device;
@@ -182,6 +247,11 @@ public class MainWindowViewModel : ViewModelBase
     {
         IsRecognitionEnabled = false;
     }
+
+    public void ColorVerify()
+    {
+        
+    }
     
     public async Task Init()
     {
@@ -251,17 +321,29 @@ public class MainWindowViewModel : ViewModelBase
                         
                 bitmap.ExtractSubset(extractedPiece, region);
                         
-                using SKBitmap grayscaleBitmap = ConvertToGrayscale(extractedPiece);
+                //using SKBitmap grayscaleBitmap = ConvertToGrayscale(extractedPiece);
                         
-                using var resizedBitmap = grayscaleBitmap.Resize(new SKImageInfo(100, 100), SKFilterQuality.High);
+                //using var resizedBitmap = grayscaleBitmap.Resize(new SKImageInfo(100, 100), SKFilterQuality.High);
                 
-                var prediction = await _faceRecognizer.Predict(resizedBitmap);
+                var prediction = await _faceRecognizer.Predict(bitmap);
+                
+                Confidence = prediction.Item4.ToString();
+                Similarity = prediction.Item2.ToString();
 
                 if (prediction.Item1 is null)
                 {
                     Identity = "Desconhecido";
                 }
                 else Identity = prediction.Item1;
+                
+                if(prediction.Item3)
+                {
+                    Source = "Real";
+                }
+                else
+                {
+                    Source = "Fake";
+                }
                 
             }
             
@@ -302,7 +384,7 @@ public class MainWindowViewModel : ViewModelBase
                     
                     using SKBitmap grayscaleBitmap = ConvertToGrayscale(extractedPiece);
                     
-                    using var resizedBitmap =   grayscaleBitmap.Resize(new SKImageInfo(100, 100), SKFilterQuality.High);
+                    using var resizedBitmap =   grayscaleBitmap.Resize(new SKImageInfo(900, 900), SKFilterQuality.High);
                     
                     var destDir = Directory.CreateDirectory(Path.Combine(baseFolder, "faces"));
                     

@@ -1,6 +1,8 @@
 
 
 using FaceONNX;
+using Microsoft.ML.OnnxRuntime;
+using MLFaceLib.ONNX;
 using SkiaDrawing;
 using SkiaSharp;
 using UMapx.Core;
@@ -11,7 +13,7 @@ public class FaceRecognizer
 {
     
     static FaceDetector faceDetector;
-    static FaceDepthClassifier faceDepthClassifier;
+    static SpoofClassifier faceSpoofClassifier;
     static Face68LandmarksExtractor _faceLandmarksExtractor;
     static FaceEmbedder _faceEmbedder;
     
@@ -20,7 +22,8 @@ public class FaceRecognizer
     
     public FaceRecognizer()
     {
-        faceDepthClassifier = new FaceDepthClassifier();
+        
+        faceSpoofClassifier = new SpoofClassifier();
         faceDetector = new FaceDetector();
         _faceLandmarksExtractor = new Face68LandmarksExtractor();
         _faceEmbedder = new FaceEmbedder();
@@ -56,27 +59,28 @@ public class FaceRecognizer
         await FaceEmbeddings.SaveToFileAsync(dataFilePath);
     }
 
-    public async Task<(string?,float)> Predict(SKBitmap image)
+    public async Task<(string?,float, bool, float)> Predict(SKBitmap image)
     {
         try
         {
-            /*
-            var spoof = faceDepthClassifier.Forward(new Bitmap(image));
+            
+            var spoof = faceSpoofClassifier.Forward(new Bitmap(image));
             var max = Matrice.Max(spoof, out int realPredict);
             var realLabel = FaceDepthClassifier.Labels[realPredict];
-            if(realLabel == "Fake") return ("fake", 0);
-            */
+            bool isReal = realLabel == "Real";
+            
+            
             
             var embedding = GetEmbedding(image);
             var proto = FaceEmbeddings.FromSimilarity(embedding);
             var label = proto.Item1;
             var similarity = proto.Item2; 
             
-            return (label, similarity);
+            return (label, similarity, isReal, max);
             
         }catch(Exception e)
         {
-            return (null, 0);
+            return (null, 0, false, 0);
         }
         
     }
