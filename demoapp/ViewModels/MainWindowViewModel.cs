@@ -15,6 +15,7 @@ using FaceONNX;
 using FFmpeg.AutoGen;
 using FlashCap;
 using MLFaceLib;
+using MLFaceLib.ONNX;
 using MsBox.Avalonia;
 using MsBox.Avalonia.Enums;
 using ReactiveUI;
@@ -23,6 +24,7 @@ using SeeShark.Decode;
 using SeeShark.Device;
 using SeeShark.FFmpeg;
 using SkiaSharp;
+using UMapx.Core;
 using PixelFormat = SeeShark.PixelFormat;
 using Rectangle = Avalonia.Controls.Shapes.Rectangle;
 
@@ -186,6 +188,8 @@ public class MainWindowViewModel : ViewModelBase
     private VideoDevice? _camera;
     
     private static MainWindowViewModel ActiveWindow { get; set; }
+    
+    private ColorIdentifier colorIdentifier = new ColorIdentifier();
 
     public async void EnableCamera()
     {
@@ -273,27 +277,35 @@ public class MainWindowViewModel : ViewModelBase
         
         BackgroundBrush = new SolidColorBrush(Color.FromRgb(255,0,0));
         
+        await Task.Delay(TimeSpan.FromSeconds(3));
+        
         CaptureColorAnalysis = true;
         
-        await Task.Delay(TimeSpan.FromSeconds(5));
+        await Task.Delay(TimeSpan.FromSeconds(2));
         
         BackgroundBrush = new SolidColorBrush(Color.FromRgb(0,255,0));
         
+        await Task.Delay(TimeSpan.FromSeconds(3));
+        
         CaptureColorAnalysis = true;
         
-        await Task.Delay(TimeSpan.FromSeconds(5));
+        await Task.Delay(TimeSpan.FromSeconds(2));
         
         BackgroundBrush = new SolidColorBrush(Color.FromRgb(0,0,255));
         
+        await Task.Delay(TimeSpan.FromSeconds(3));
+        
         CaptureColorAnalysis = true;
         
-        await Task.Delay(TimeSpan.FromSeconds(5));
+        await Task.Delay(TimeSpan.FromSeconds(2));
         
         BackgroundBrush = new SolidColorBrush(Color.FromRgb(255,255,255));
         
+        await Task.Delay(TimeSpan.FromSeconds(3));
+        
         CaptureColorAnalysis = true;
         
-        await Task.Delay(TimeSpan.FromSeconds(5));
+        await Task.Delay(TimeSpan.FromSeconds(2));
         
         BackgroundBrush = new SolidColorBrush(Color.FromRgb(0,0,0));
         
@@ -390,6 +402,27 @@ public class MainWindowViewModel : ViewModelBase
                 else
                 {
                     Source = "Fake";
+                }
+
+                if (CaptureColorAnalysis)
+                {
+                    
+                    var colorPredictor = colorIdentifier;
+                    
+                    var cpfloat = colorPredictor.Forward(new SkiaDrawing.Bitmap(bitmap));
+                    //cpfloat[1] = 0;
+                    cpfloat[4] = 0;
+                    var max = Matrice.Max(cpfloat, out int cPredict);
+                    var cLabel = ColorIdentifier.Labels[cPredict];
+
+                    if (cLabel == "NC") NC = "X";
+                    else if (cLabel == "1") R = "X";
+                    else if (cLabel == "2") G = "X";
+                    else if (cLabel == "3") B = "X";
+                    else if (cLabel == "4") W = "X";
+                    
+                    
+                    CaptureColorAnalysis = false;
                 }
                 
             }

@@ -46,11 +46,11 @@ public class ColorIdentifier: IFaceClassifier
     /// <summary>
     /// Returns the labels.
     /// </summary>
-    public static readonly string[] Labels = new string[] { "1", "2", "3", "4", "5" };
+    public static readonly string[] Labels = new string[] { "1", "2", "3", "4", "NC" };
 
     #endregion
     
-     #region Methods
+    #region Methods
 
     /// <inheritdoc/>
     public float[] Forward(Bitmap image)

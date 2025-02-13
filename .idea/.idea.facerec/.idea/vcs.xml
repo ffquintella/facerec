@@ -2,6 +2,8 @@
 <project version="4">
   <component name="VcsDirectoryMappings">
     <mapping directory="" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/../FaceONNX" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/../SeeShark" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/../SkiaDrawing" vcs="Git" />
   </component>
 </project>
