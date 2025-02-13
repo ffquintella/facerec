@@ -50,6 +50,14 @@ public class MainWindowViewModel : ViewModelBase
     }
     
     
+    private bool _captureColorAnalysis;
+    
+    public bool CaptureColorAnalysis
+    {
+        get => _captureColorAnalysis;
+        set => this.RaiseAndSetIfChanged(ref _captureColorAnalysis, value);
+    }
+    
     private bool _isCameraEnabled;
     
     public bool IsCameraEnabled
@@ -257,8 +265,38 @@ public class MainWindowViewModel : ViewModelBase
         IsRecognitionEnabled = false;
     }
 
-    public void ColorVerify()
+    public async Task ColorVerify()
     {
+        CaptureColorAnalysis = true;
+        
+        await Task.Delay(TimeSpan.FromSeconds(5));
+        
+        BackgroundBrush = new SolidColorBrush(Color.FromRgb(255,0,0));
+        
+        CaptureColorAnalysis = true;
+        
+        await Task.Delay(TimeSpan.FromSeconds(5));
+        
+        BackgroundBrush = new SolidColorBrush(Color.FromRgb(0,255,0));
+        
+        CaptureColorAnalysis = true;
+        
+        await Task.Delay(TimeSpan.FromSeconds(5));
+        
+        BackgroundBrush = new SolidColorBrush(Color.FromRgb(0,0,255));
+        
+        CaptureColorAnalysis = true;
+        
+        await Task.Delay(TimeSpan.FromSeconds(5));
+        
+        BackgroundBrush = new SolidColorBrush(Color.FromRgb(255,255,255));
+        
+        CaptureColorAnalysis = true;
+        
+        await Task.Delay(TimeSpan.FromSeconds(5));
+        
+        BackgroundBrush = new SolidColorBrush(Color.FromRgb(0,0,0));
+        
         
     }
     
