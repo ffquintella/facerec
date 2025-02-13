@@ -384,7 +384,7 @@ public class MainWindowViewModel : ViewModelBase
                         
                 //using var resizedBitmap = grayscaleBitmap.Resize(new SKImageInfo(100, 100), SKFilterQuality.High);
                 
-                var prediction = await _faceRecognizer.Predict(bitmap);
+                var prediction = await _faceRecognizer.Predict(extractedPiece);
                 
                 Confidence = prediction.Item4.ToString();
                 Similarity = prediction.Item2.ToString();
@@ -409,17 +409,17 @@ public class MainWindowViewModel : ViewModelBase
                     
                     var colorPredictor = colorIdentifier;
                     
-                    var cpfloat = colorPredictor.Forward(new SkiaDrawing.Bitmap(bitmap));
+                    var cpfloat = colorPredictor.Forward(new SkiaDrawing.Bitmap(extractedPiece));
                     //cpfloat[1] = 0;
-                    cpfloat[4] = 0;
+                    //cpfloat[4] = 0;
                     var max = Matrice.Max(cpfloat, out int cPredict);
                     var cLabel = ColorIdentifier.Labels[cPredict];
 
                     if (cLabel == "NC") NC = "X";
-                    else if (cLabel == "1") R = "X";
-                    else if (cLabel == "2") G = "X";
-                    else if (cLabel == "3") B = "X";
-                    else if (cLabel == "4") W = "X";
+                    else if (cLabel == "R") R = "X";
+                    else if (cLabel == "G") G = "X";
+                    else if (cLabel == "B") B = "X";
+                    else if (cLabel == "W") W = "X";
                     
                     
                     CaptureColorAnalysis = false;

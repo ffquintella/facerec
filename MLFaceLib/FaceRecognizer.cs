@@ -63,18 +63,26 @@ public class FaceRecognizer
     {
         try
         {
+            var grayImage = ConvertToGrayscale(image);
             
-            var spoof = faceSpoofClassifier.Forward(new Bitmap(image));
+            var spoof = faceSpoofClassifier.Forward(new Bitmap(grayImage));
             var max = Matrice.Max(spoof, out int realPredict);
-            var realLabel = FaceDepthClassifier.Labels[realPredict];
-            bool isReal = realLabel == "Real";
             
+            bool isReal = false;
+
+            if (max < 50)
+            {
+                var realLabel = SpoofClassifier.Labels[realPredict];
+                isReal = realLabel == "Real";
+            }
             
             
             var embedding = GetEmbedding(image);
             var proto = FaceEmbeddings.FromSimilarity(embedding);
             var label = proto.Item1;
             var similarity = proto.Item2; 
+            
+            if(similarity < 0.5) label = "Unknown";
             
             return (label, similarity, isReal, max);
             
@@ -91,6 +99,32 @@ public class FaceRecognizer
         else throw new Exception("Data file not found.");
     }
 
+    /// <summary>
+    /// Converts an SKBitmap to grayscale.
+    /// </summary>
+    private static SKBitmap ConvertToGrayscale(SKBitmap bitmap)
+    {
+        SKBitmap grayBitmap = new SKBitmap(bitmap.Width, bitmap.Height);
+
+        using (SKCanvas canvas = new SKCanvas(grayBitmap))
+        using (SKPaint paint = new SKPaint())
+        {
+            // Use a color matrix filter for grayscale conversion
+            paint.ColorFilter = SKColorFilter.CreateColorMatrix(new float[]
+            {
+                0.3f, 0.59f, 0.11f, 0, 0,  // Red
+                0.3f, 0.59f, 0.11f, 0, 0,  // Green
+                0.3f, 0.59f, 0.11f, 0, 0,  // Blue
+                0,    0,     0,     1, 0   // Alpha
+            });
+
+            // Draw the original image onto the new canvas using the grayscale filter
+            canvas.DrawBitmap(bitmap, 0, 0, paint);
+        }
+
+        return grayBitmap;
+    }
+    
 
     static float[] GetEmbedding(SKBitmap image, bool detectFace = false)
     {

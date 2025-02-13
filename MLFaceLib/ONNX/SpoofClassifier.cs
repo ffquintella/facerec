@@ -8,13 +8,9 @@ using UMapx.Imaging;
 
 namespace MLFaceLib.ONNX;
 
-public class SpoofClassifier: IFaceClassifier
+public class SpoofClassifier: BaseClassifier
 {
     #region Private data
-        /// <summary>
-        /// Inference session.
-        /// </summary>
-        private readonly InferenceSession _session;
     
         private string _modelFile = Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "models", "antispoof-efficient-2.onnx");
         
@@ -52,16 +48,10 @@ public class SpoofClassifier: IFaceClassifier
     #endregion
 
     #region Methods
+    
 
     /// <inheritdoc/>
-    public float[] Forward(Bitmap image)
-    {
-        var rgb = image.ToRGB(false);
-        return Forward(rgb);
-    }
-
-    /// <inheritdoc/>
-    public float[] Forward(float[][,] image)
+    public override float[] Forward(float[][,] image)
     {
         if (image.Length != 3)
             throw new ArgumentException("Image must be in RGB terms");
@@ -99,37 +89,5 @@ public class SpoofClassifier: IFaceClassifier
 
     #endregion
 
-    #region IDisposable
-
-    private bool _disposed;
-
-    /// <inheritdoc/>
-    public void Dispose()
-    {
-        Dispose(true);
-        GC.SuppressFinalize(this);
-    }
-
-    private void Dispose(bool disposing)
-    {
-        if (!_disposed)
-        {
-            if (disposing)
-            {
-                _session?.Dispose();
-            }
-
-            _disposed = true;
-        }
-    }
-
-    /// <summary>
-    /// Destructor.
-    /// </summary>
-    ~SpoofClassifier()
-    {
-        Dispose(false);
-    }
-
-    #endregion
+    
 }

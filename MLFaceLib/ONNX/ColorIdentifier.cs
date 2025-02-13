@@ -7,13 +7,9 @@ using UMapx.Imaging;
 
 namespace MLFaceLib.ONNX;
 
-public class ColorIdentifier: IFaceClassifier
+public class ColorIdentifier: BaseClassifier
 {
     #region Private data
-    /// <summary>
-    /// Inference session.
-    /// </summary>
-    private readonly InferenceSession _session;
     
     private string _modelFile = Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "models", "chromatic-efficient-1_50.onnx");
         
@@ -46,22 +42,17 @@ public class ColorIdentifier: IFaceClassifier
     /// <summary>
     /// Returns the labels.
     /// </summary>
-    public static readonly string[] Labels = new string[] { "1", "2", "3", "4", "NC" };
+    public static readonly string[] Labels = new string[] { "R", "G", "B", "W", "NC" };
 
     #endregion
     
     #region Methods
 
-    /// <inheritdoc/>
-    public float[] Forward(Bitmap image)
+    
+    public override float[] Forward(float[][,] image)
     {
-        var rgb = image.ToRGB(false);
-        return Forward(rgb);
-    }
-
-    /// <inheritdoc/>
-    public float[] Forward(float[][,] image)
-    {
+        
+        
         if (image.Length != 3)
             throw new ArgumentException("Image must be in RGB terms");
 
