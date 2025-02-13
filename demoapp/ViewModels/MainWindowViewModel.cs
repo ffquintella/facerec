@@ -97,6 +97,15 @@ public class MainWindowViewModel : ViewModelBase
         get => _b;
         set => this.RaiseAndSetIfChanged(ref _b, value);
     }
+
+    private string _w;
+    
+    public string W
+    {
+        get => _w;
+        set => this.RaiseAndSetIfChanged(ref _w, value);
+    }
+    
     
     private string _nc;
     

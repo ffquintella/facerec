@@ -48,6 +48,9 @@
                     <TextBlock Text="B: "/> <TextBlock Text="{Binding B}"/>
                 </StackPanel> 
                 <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="W: "/> <TextBlock Text="{Binding W}"/>
+                </StackPanel> 
+                <StackPanel Orientation="Horizontal">
                     <TextBlock Text="NC: "/> <TextBlock Text="{Binding NC}"/>
                 </StackPanel> 
             </StackPanel>

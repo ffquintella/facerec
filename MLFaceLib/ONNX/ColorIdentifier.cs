@@ -1,5 +1,4 @@
 using FaceONNX;
-using FaceONNX.Properties;
 using Microsoft.ML.OnnxRuntime;
 using Microsoft.ML.OnnxRuntime.Tensors;
 using SkiaDrawing;
@@ -8,24 +7,24 @@ using UMapx.Imaging;
 
 namespace MLFaceLib.ONNX;
 
-public class SpoofClassifier: IFaceClassifier
+public class ColorIdentifier: IFaceClassifier
 {
     #region Private data
-        /// <summary>
-        /// Inference session.
-        /// </summary>
-        private readonly InferenceSession _session;
+    /// <summary>
+    /// Inference session.
+    /// </summary>
+    private readonly InferenceSession _session;
     
-        private string _modelFile = Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "models", "antispoof-efficient-2.onnx");
+    private string _modelFile = Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "models", "chromatic-efficient-1_50.onnx");
         
     #endregion
-
+    
     #region Constructor
 
     /// <summary>
     /// Initializes face depth classifier.
     /// </summary>
-    public SpoofClassifier()
+    public ColorIdentifier()
     {
         _session = new InferenceSession(_modelFile);
     }
@@ -34,24 +33,24 @@ public class SpoofClassifier: IFaceClassifier
     /// Initializes face depth classifier.
     /// </summary>
     /// <param name="options">Session options</param>
-    public SpoofClassifier(SessionOptions options)
+    public ColorIdentifier(SessionOptions options)
     {
         _session = new InferenceSession(_modelFile, options);
     }
     
 
     #endregion
-
+    
     #region Properties
 
     /// <summary>
     /// Returns the labels.
     /// </summary>
-    public static readonly string[] Labels = new string[] { "Fake", "Real" };
+    public static readonly string[] Labels = new string[] { "1", "2", "3", "4", "5" };
 
     #endregion
-
-    #region Methods
+    
+     #region Methods
 
     /// <inheritdoc/>
     public float[] Forward(Bitmap image)
@@ -126,7 +125,7 @@ public class SpoofClassifier: IFaceClassifier
     /// <summary>
     /// Destructor.
     /// </summary>
-    ~SpoofClassifier()
+    ~ColorIdentifier()
     {
         Dispose(false);
     }
