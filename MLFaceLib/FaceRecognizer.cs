@@ -2,6 +2,7 @@
 
 using FaceONNX;
 using Microsoft.ML.OnnxRuntime;
+using MLFaceLib.ImageTools;
 using MLFaceLib.ONNX;
 using SkiaDrawing;
 using SkiaSharp;
@@ -63,14 +64,19 @@ public class FaceRecognizer
     {
         try
         {
-            var grayImage = ConvertToGrayscale(image);
+            //var grayImage = ConvertToGrayscale(image);
+            //var normalizedArray = GetImageFloatArray(image);
             
-            var spoof = faceSpoofClassifier.Forward(new Bitmap(grayImage));
+            
+            var grayImage = ConvertToGrayscale(image);
+            var normalizedArray = GetImageFloatArray(grayImage);
+            
+            var spoof = faceSpoofClassifier.Forward(normalizedArray);
             var max = Matrice.Max(spoof, out int realPredict);
             
             bool isReal = false;
 
-            if (max < 50)
+            if (max < 20)
             {
                 var realLabel = SpoofClassifier.Labels[realPredict];
                 isReal = realLabel == "Real";

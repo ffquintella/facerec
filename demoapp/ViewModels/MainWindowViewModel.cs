@@ -15,6 +15,7 @@ using FaceONNX;
 using FFmpeg.AutoGen;
 using FlashCap;
 using MLFaceLib;
+using MLFaceLib.ImageTools;
 using MLFaceLib.ONNX;
 using MsBox.Avalonia;
 using MsBox.Avalonia.Enums;
@@ -409,7 +410,9 @@ public class MainWindowViewModel : ViewModelBase
                     
                     var colorPredictor = colorIdentifier;
                     
-                    var cpfloat = colorPredictor.Forward(new SkiaDrawing.Bitmap(extractedPiece));
+                    var normalizedArray = NormalizationHelper.NormalizeSKBitmap(extractedPiece);
+                    
+                    var cpfloat = colorPredictor.Forward(normalizedArray);
                     //cpfloat[1] = 0;
                     //cpfloat[4] = 0;
                     var max = Matrice.Max(cpfloat, out int cPredict);
