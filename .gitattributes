@@ -1,3 +1,5 @@
 models/antispoof-efficient-1.onnx filter=lfs diff=lfs merge=lfs -text
 models/antispoof-efficient-2.onnx filter=lfs diff=lfs merge=lfs -text
 models/chromatic-efficient-1_50.onnx filter=lfs diff=lfs merge=lfs -text
+models/antispoof-swin-1.onnx filter=lfs diff=lfs merge=lfs -text
+*.onnx filter=lfs diff=lfs merge=lfs -text

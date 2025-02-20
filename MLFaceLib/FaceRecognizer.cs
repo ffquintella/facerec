@@ -67,11 +67,15 @@ public class FaceRecognizer
             //var grayImage = ConvertToGrayscale(image);
             //var normalizedArray = GetImageFloatArray(image);
             
+            //var grayImage = ConvertToGrayscale(image);
+            //var normalizedArray = GetImageFloatArray(grayImage);
             
-            var grayImage = ConvertToGrayscale(image);
-            var normalizedArray = GetImageFloatArray(grayImage);
+
+            var normalizedArray = ImageTools.NormalizationHelper.RGBMeanNormalization(image,
+                [0.485f, 0.456f, 0.406f], [0.229f, 0.224f, 0.225f]);
             
             var spoof = faceSpoofClassifier.Forward(normalizedArray);
+            
             var max = Matrice.Max(spoof, out int realPredict);
             
             bool isReal = false;
