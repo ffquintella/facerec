@@ -70,8 +70,8 @@ public class ColorIdentifier: BaseClassifier
         // pre-processing 
         var dimentions = new int[] { 1, 3, size.Height, size.Width };
         var tensors = resized.ToFloatTensor(true);
-        tensors.Compute(127.0f, Matrice.Sub);
-        //var inputData = tensors.Average();
+        //tensors.Compute(127.0f, Matrice.Sub);
+
         
         // Flatten the tensors array
         var flatTensors = tensors.SelectMany(t => t.Cast<float>()).ToArray();

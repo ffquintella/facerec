@@ -191,6 +191,8 @@ public class MainWindowViewModel : ViewModelBase
     private static MainWindowViewModel ActiveWindow { get; set; }
     
     private ColorIdentifier colorIdentifier = new ColorIdentifier();
+    
+    private int colorIndex = 0;
 
     public async void EnableCamera()
     {
@@ -274,43 +276,6 @@ public class MainWindowViewModel : ViewModelBase
     {
         CaptureColorAnalysis = true;
         
-        await Task.Delay(TimeSpan.FromSeconds(5));
-        
-        BackgroundBrush = new SolidColorBrush(Color.FromRgb(255,0,0));
-        
-        await Task.Delay(TimeSpan.FromSeconds(3));
-        
-        CaptureColorAnalysis = true;
-        
-        await Task.Delay(TimeSpan.FromSeconds(2));
-        
-        BackgroundBrush = new SolidColorBrush(Color.FromRgb(0,255,0));
-        
-        await Task.Delay(TimeSpan.FromSeconds(3));
-        
-        CaptureColorAnalysis = true;
-        
-        await Task.Delay(TimeSpan.FromSeconds(2));
-        
-        BackgroundBrush = new SolidColorBrush(Color.FromRgb(0,0,255));
-        
-        await Task.Delay(TimeSpan.FromSeconds(3));
-        
-        CaptureColorAnalysis = true;
-        
-        await Task.Delay(TimeSpan.FromSeconds(2));
-        
-        BackgroundBrush = new SolidColorBrush(Color.FromRgb(255,255,255));
-        
-        await Task.Delay(TimeSpan.FromSeconds(3));
-        
-        CaptureColorAnalysis = true;
-        
-        await Task.Delay(TimeSpan.FromSeconds(2));
-        
-        BackgroundBrush = new SolidColorBrush(Color.FromRgb(0,0,0));
-        
-        
     }
     
     public async Task Init()
@@ -334,6 +299,36 @@ public class MainWindowViewModel : ViewModelBase
     private async Task ProcessImageAsync(Frame frame)
     {
         //frameCount++;
+        if (CaptureColorAnalysis)
+        {
+            switch (colorIndex)
+            {
+                case 0:
+                    Dispatcher.UIThread.Post(() => BackgroundBrush = new SolidColorBrush(Color.FromRgb(255,0,0)));
+                    break;
+                case 1:
+                    Dispatcher.UIThread.Post(() => BackgroundBrush = new SolidColorBrush(Color.FromRgb(0,255,0)));
+                    break;
+                case 2:
+                    Dispatcher.UIThread.Post(() => BackgroundBrush = new SolidColorBrush(Color.FromRgb(0,0,255)));
+                    break;
+                case 3:
+                    Dispatcher.UIThread.Post(() => BackgroundBrush = new SolidColorBrush(Color.FromRgb(255,255,255)));
+                    break;
+                case 4:
+                    Dispatcher.UIThread.Post(() => BackgroundBrush = new SolidColorBrush(Color.FromRgb(0,0,0)));
+                    break;
+            }
+
+            colorIndex++;
+
+            if (colorIndex > 5)
+            {
+                colorIndex = 0;
+                CaptureColorAnalysis = false;
+            }
+        }
+        
         
         var converter = new FrameConverter(frame, PixelFormat.Rgba);
         var rgbaFrame = converter.Convert(frame);
@@ -380,10 +375,6 @@ public class MainWindowViewModel : ViewModelBase
                 SKRectI region = new SKRectI(face.Box.X, face.Box.Y, face.Box.X + width, face.Box.Y + height);
                         
                 bitmap.ExtractSubset(extractedPiece, region);
-                        
-                //using SKBitmap grayscaleBitmap = ConvertToGrayscale(extractedPiece);
-                        
-                //using var resizedBitmap = grayscaleBitmap.Resize(new SKImageInfo(100, 100), SKFilterQuality.High);
                 
                 var prediction = await _faceRecognizer.Predict(extractedPiece);
                 
@@ -410,11 +401,11 @@ public class MainWindowViewModel : ViewModelBase
                     
                     var colorPredictor = colorIdentifier;
                     
-                    var normalizedArray = NormalizationHelper.NormalizeSKBitmap(extractedPiece);
+                    var normalizedArray = NormalizationHelper.RGBMeanNormalization(extractedPiece,
+                        [0.485f, 0.456f, 0.406f], [0.229f, 0.224f, 0.225f]);
                     
                     var cpfloat = colorPredictor.Forward(normalizedArray);
-                    //cpfloat[1] = 0;
-                    //cpfloat[4] = 0;
+
                     var max = Matrice.Max(cpfloat, out int cPredict);
                     var cLabel = ColorIdentifier.Labels[cPredict];
 
@@ -425,7 +416,7 @@ public class MainWindowViewModel : ViewModelBase
                     else if (cLabel == "W") W = "X";
                     
                     
-                    CaptureColorAnalysis = false;
+                    //CaptureColorAnalysis = false;
                 }
                 
             }

@@ -56,6 +56,7 @@ public class SpoofClassifier: BaseClassifier
         if (image.Length != 3)
             throw new ArgumentException("Image must be in RGB terms");
 
+        //var size = new Size(960, 960);
         var size = new Size(900, 900);
         var resized = new float[3][,];
 
@@ -70,7 +71,7 @@ public class SpoofClassifier: BaseClassifier
         // pre-processing 
         var dimentions = new int[] { 1, 3, size.Height, size.Width };
         var tensors = resized.ToFloatTensor(true);
-        tensors.Compute(127.0f, Matrice.Sub);
+        //tensors.Compute(127.0f, Matrice.Sub);
         //var inputData = tensors.Average();
         
         // Flatten the tensors array
