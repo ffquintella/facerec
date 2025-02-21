@@ -203,7 +203,7 @@ public class MainWindowViewModel : ViewModelBase
         
         var options = new VideoInputOptions
         {
-            VideoSize = new (640, 480),
+            VideoSize = new (1280, 960),
             Framerate = new AVRational { num = 20, den = 1 },
             InputFormat = "rgba",
             IsRaw = true,
@@ -401,19 +401,19 @@ public class MainWindowViewModel : ViewModelBase
                     
                     var colorPredictor = colorIdentifier;
                     
-                    var normalizedArray = NormalizationHelper.RGBMeanNormalization(extractedPiece,
-                        [0.485f, 0.456f, 0.406f], [0.229f, 0.224f, 0.225f]);
+                    //var normalizedArray = NormalizationHelper.RGBMeanNormalization(extractedPiece,
+                    //    [0.485f, 0.456f, 0.406f], [0.229f, 0.224f, 0.225f]);
                     
-                    var cpfloat = colorPredictor.Forward(normalizedArray);
+                    var cpfloat = colorPredictor.Forward(extractedPiece);
 
                     var max = Matrice.Max(cpfloat, out int cPredict);
                     var cLabel = ColorIdentifier.Labels[cPredict];
 
-                    if (cLabel == "NC") NC = "X";
-                    else if (cLabel == "R") R = "X";
-                    else if (cLabel == "G") G = "X";
-                    else if (cLabel == "B") B = "X";
-                    else if (cLabel == "W") W = "X";
+                    if (cLabel == "NC") NC = $"{colorIndex}";  // 1 - W / NC  4 - R
+                    else if (cLabel == "R") R = $"{colorIndex}";
+                    else if (cLabel == "G") G = $"{colorIndex}";
+                    else if (cLabel == "B") B = $"{colorIndex}";
+                    else if (cLabel == "W") W = $"{colorIndex}";
                     
                     
                     //CaptureColorAnalysis = false;

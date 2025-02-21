@@ -1,7 +1,9 @@
 using FaceONNX;
 using Microsoft.ML.OnnxRuntime;
 using Microsoft.ML.OnnxRuntime.Tensors;
+using MLFaceLib.ImageTools;
 using SkiaDrawing;
+using SkiaSharp;
 using UMapx.Core;
 using UMapx.Imaging;
 
@@ -11,7 +13,7 @@ public class ColorIdentifier: BaseClassifier
 {
     #region Private data
     
-    private string _modelFile = Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "models", "chromatic-efficient-1_50.onnx");
+    private string _modelFile = Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "models", "chromatic-efficient-2.onnx");
         
     #endregion
     
@@ -42,12 +44,24 @@ public class ColorIdentifier: BaseClassifier
     /// <summary>
     /// Returns the labels.
     /// </summary>
-    public static readonly string[] Labels = new string[] { "R", "G", "B", "W", "NC" };
+    public static readonly string[] Labels = new string[] { "NC", "R", "W", "G", "B" };
 
     #endregion
     
     #region Methods
 
+
+    public float[] Forward(SKBitmap image)
+    {
+        //var normalizedArray = NormalizationHelper.RGBMeanNormalization(extractedPiece,
+        //    [0.485f, 0.456f, 0.406f], [0.229f, 0.224f, 0.225f]);
+        
+        var resized = image.ResizeBitmap(960, 960, SKFilterQuality.High);
+        
+        var array = resized.ToNormalizedFloatArray([0.485f, 0.456f, 0.406f], [0.229f, 0.224f, 0.225f]);
+        
+        return Forward(array);
+    }
     
     public override float[] Forward(float[][,] image)
     {
@@ -56,20 +70,21 @@ public class ColorIdentifier: BaseClassifier
         if (image.Length != 3)
             throw new ArgumentException("Image must be in RGB terms");
 
-        var size = new Size(900, 900);
+        var size = new Size(960, 960);
+        /*
         var resized = new float[3][,];
 
         for (int i = 0; i < image.Length; i++)
         {
             resized[i] = image[i].Resize(size.Height, size.Width, UMapx.Core.InterpolationMode.Bilinear);
-        }
+        }*/
 
         var inputMeta = _session.InputMetadata;
         var name = inputMeta.Keys.ToArray()[0];
 
         // pre-processing 
         var dimentions = new int[] { 1, 3, size.Height, size.Width };
-        var tensors = resized.ToFloatTensor(true);
+        var tensors = image.ToFloatTensor(true);
         //tensors.Compute(127.0f, Matrice.Sub);
 
         
