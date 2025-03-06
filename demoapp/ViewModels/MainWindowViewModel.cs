@@ -381,6 +381,8 @@ public class MainWindowViewModel : ViewModelBase
                 Confidence = prediction.Item4.ToString();
                 Similarity = prediction.Item2.ToString();
 
+                var fconf = prediction.Item4;
+
                 if (prediction.Item1 is null)
                 {
                     Identity = "Desconhecido";
@@ -389,7 +391,8 @@ public class MainWindowViewModel : ViewModelBase
                 
                 if(prediction.Item3)
                 {
-                    Source = "Real";
+                    if(fconf > 1) Source = "Real";
+                    else Source = "Fake";
                 }
                 else
                 {
