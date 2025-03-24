@@ -251,7 +251,7 @@ public class MainWindowViewModel : ViewModelBase
             
         }
         
-        _ = CaptureVideo();
+        await CaptureVideo();
         
     }
     
