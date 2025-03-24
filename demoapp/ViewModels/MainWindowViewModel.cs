@@ -418,12 +418,12 @@ public class MainWindowViewModel : ViewModelBase
     }
 
 
-    private async Task ProcessImageAsync(SKBitmap frame)
+    private async Task ProcessImageAsync(SKBitmap bitmap)
     {
         if(frameCount > 1000)
         {
             frameCount = 0;
-            //GC.Collect();
+            GC.Collect();
         }
         frameCount++;
         
@@ -457,14 +457,16 @@ public class MainWindowViewModel : ViewModelBase
             }
         }
         
-        using var bitmap = frame;
+        //using var bitmap = frame;
 
         if (IsRecognitionEnabled)
         {
             
-            var dnnDetector = new FaceDetector();
-            
-            if(frameCount % 60 == 0) await Task.Run(() => _faces = dnnDetector.Forward(new SkiaDrawing.Bitmap(bitmap)));
+            if(frameCount % 30 == 0) await Task.Run(() =>
+            {
+                var dnnDetector = new FaceDetector();
+                return _faces = dnnDetector.Forward(new SkiaDrawing.Bitmap(bitmap));
+            });
             
             // Only ID the first face
             if (_faces.Length > 0)
@@ -473,7 +475,7 @@ public class MainWindowViewModel : ViewModelBase
                 // Create a canvas to draw on the image
                 using SKCanvas canvas = new SKCanvas(bitmap);
             
-                using SKPaint paint2 = new SKPaint
+                using SKPaint paintYellow = new SKPaint
                 {
                     Color = SKColors.Yellow,      // Rectangle color
                     Style = SKPaintStyle.Stroke, // Stroke style (outline)
@@ -483,7 +485,7 @@ public class MainWindowViewModel : ViewModelBase
                 foreach (var faceRec in _faces)
                 {
                     // Draw the rectangle on the canvas
-                    canvas.DrawRect(faceRec.Box.ToSKRect(), paint2);
+                    canvas.DrawRect(faceRec.Box.ToSKRect(), paintYellow);
                 }
                 
                 var face = _faces[0];
@@ -498,7 +500,7 @@ public class MainWindowViewModel : ViewModelBase
                 bitmap.ExtractSubset(extractedPiece, region);
 
 
-                if (frameCount % 30 == 0)
+                if (frameCount % 60 == 0)
                 {
                     
                     var prediction = await _faceRecognizer.Predict(extractedPiece);
@@ -617,8 +619,8 @@ public class MainWindowViewModel : ViewModelBase
         // Convert SKBitmap to JPEG in MemoryStream
         using MemoryStream memoryStream = new MemoryStream();
         using SKImage image = SKImage.FromBitmap(bitmap);
-        using SKData encodedData = image.Encode(SKEncodedImageFormat.Jpeg, 90); // 90 = Quality
-
+        using SKData encodedData = image.Encode(SKEncodedImageFormat.Jpeg, 90); 
+        
         // Write to memory stream
         encodedData.SaveTo(memoryStream);
         memoryStream.Position = 0;
