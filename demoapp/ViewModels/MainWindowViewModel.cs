@@ -307,6 +307,7 @@ public class MainWindowViewModel : ViewModelBase
     
     public async Task Init()
     {
+        //Thread.Sleep(100);
         var devices = new CaptureDevices();
         
         DeviceList = new ObservableCollection<CaptureDeviceDescriptor>();
