@@ -41,7 +41,7 @@ public class MainWindowViewModel : ViewModelBase
         
         ActiveWindow = this;
 
-        _ = Init();
+        //_ = Init();
 
     }
     
@@ -300,6 +300,11 @@ public class MainWindowViewModel : ViewModelBase
         
     }
     
+    public async Task OnLoaded()
+    {
+        await Init();
+    }
+    
     public async Task Init()
     {
         var devices = new CaptureDevices();
@@ -418,7 +423,7 @@ public class MainWindowViewModel : ViewModelBase
         if(frameCount > 1000)
         {
             frameCount = 0;
-            GC.Collect();
+            //GC.Collect();
         }
         frameCount++;
         
@@ -459,28 +464,28 @@ public class MainWindowViewModel : ViewModelBase
             
             var dnnDetector = new FaceDetector();
             
-            if(frameCount % 30 == 0) await Task.Run(() => _faces = dnnDetector.Forward(new SkiaDrawing.Bitmap(bitmap)));
-            
-            // Create a canvas to draw on the image
-            using SKCanvas canvas = new SKCanvas(bitmap);
-            
-            
-            using SKPaint paint2 = new SKPaint
-            {
-                Color = SKColors.Yellow,      // Rectangle color
-                Style = SKPaintStyle.Stroke, // Stroke style (outline)
-                StrokeWidth = 5           // Thickness of the border
-            };
-            
-            foreach (var face in _faces)
-            {
-                // Draw the rectangle on the canvas
-                canvas.DrawRect(face.Box.ToSKRect(), paint2);
-            }
+            if(frameCount % 60 == 0) await Task.Run(() => _faces = dnnDetector.Forward(new SkiaDrawing.Bitmap(bitmap)));
             
             // Only ID the first face
             if (_faces.Length > 0)
             {
+                
+                // Create a canvas to draw on the image
+                using SKCanvas canvas = new SKCanvas(bitmap);
+            
+                using SKPaint paint2 = new SKPaint
+                {
+                    Color = SKColors.Yellow,      // Rectangle color
+                    Style = SKPaintStyle.Stroke, // Stroke style (outline)
+                    StrokeWidth = 5           // Thickness of the border
+                };
+            
+                foreach (var faceRec in _faces)
+                {
+                    // Draw the rectangle on the canvas
+                    canvas.DrawRect(faceRec.Box.ToSKRect(), paint2);
+                }
+                
                 var face = _faces[0];
                 var width = face.Box.Width;
                 var height = face.Box.Height;

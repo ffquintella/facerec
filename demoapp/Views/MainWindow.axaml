@@ -8,6 +8,7 @@
         x:Class="demoapp.Views.MainWindow"
         x:DataType="vm:MainWindowViewModel"
         Icon="/Assets/avalonia-logo.ico"
+
         Title="demoapp">
 
     <Design.DataContext>
