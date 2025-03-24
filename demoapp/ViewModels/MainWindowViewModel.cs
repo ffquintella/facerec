@@ -234,6 +234,8 @@ public class MainWindowViewModel : ViewModelBase
     
     private int colorIndex = 0;
 
+
+
     public async Task EnableCamera()
     {
 
@@ -259,7 +261,7 @@ public class MainWindowViewModel : ViewModelBase
     
     private FaceRecognizer _faceRecognizer;
     
-    private Rectangle[] _faces;
+    private FaceDetectionResult[] _faces;
 
     private async Task CaptureVideo()
     {
@@ -300,7 +302,6 @@ public class MainWindowViewModel : ViewModelBase
     
     public async Task Init()
     {
-
         var devices = new CaptureDevices();
         
         DeviceList = new ObservableCollection<CaptureDeviceDescriptor>();
@@ -326,7 +327,7 @@ public class MainWindowViewModel : ViewModelBase
 
         if (CharacteristicsList is null or { Count: <= 0 }) throw new Exception("Invalid camera");
         
-        Characteristics = CharacteristicsList.FirstOrDefault(c => c.Width > 900);
+        Characteristics = CharacteristicsList.FirstOrDefault(c => c is { Width: > 900, PixelFormat: PixelFormats.RGB32 });
 
         Height = Characteristics!.Height;
         Width = Characteristics!.Width;
@@ -414,7 +415,13 @@ public class MainWindowViewModel : ViewModelBase
 
     private async Task ProcessImageAsync(SKBitmap frame)
     {
-        //frameCount++;
+        if(frameCount > 1000)
+        {
+            frameCount = 0;
+            GC.Collect();
+        }
+        frameCount++;
+        
         if (CaptureColorAnalysis)
         {
             switch (colorIndex)
@@ -445,21 +452,14 @@ public class MainWindowViewModel : ViewModelBase
             }
         }
         
-        
-        //var converter = new FrameConverter(frame, PixelFormat.Rgba);
-        //var rgbaFrame = converter.Convert(frame);
-        
-        //using var bitmap = LoadRGBAImage(rgbaFrame.RawData.ToArray(), rgbaFrame.Width, rgbaFrame.Height);
-        
         using var bitmap = frame;
 
         if (IsRecognitionEnabled)
         {
             
             var dnnDetector = new FaceDetector();
-
-            var faces = dnnDetector.Forward(new SkiaDrawing.Bitmap(bitmap));
             
+            if(frameCount % 30 == 0) await Task.Run(() => _faces = dnnDetector.Forward(new SkiaDrawing.Bitmap(bitmap)));
             
             // Create a canvas to draw on the image
             using SKCanvas canvas = new SKCanvas(bitmap);
@@ -472,17 +472,16 @@ public class MainWindowViewModel : ViewModelBase
                 StrokeWidth = 5           // Thickness of the border
             };
             
-            foreach (var face in faces)
+            foreach (var face in _faces)
             {
                 // Draw the rectangle on the canvas
                 canvas.DrawRect(face.Box.ToSKRect(), paint2);
             }
             
             // Only ID the first face
-
-            if (faces.Length > 0)
+            if (_faces.Length > 0)
             {
-                var face = faces[0];
+                var face = _faces[0];
                 var width = face.Box.Width;
                 var height = face.Box.Height;
                         
@@ -492,29 +491,35 @@ public class MainWindowViewModel : ViewModelBase
                 SKRectI region = new SKRectI(face.Box.X, face.Box.Y, face.Box.X + width, face.Box.Y + height);
                         
                 bitmap.ExtractSubset(extractedPiece, region);
-                
-                var prediction = await _faceRecognizer.Predict(extractedPiece);
-                
-                Confidence = prediction.Item4.ToString();
-                Similarity = prediction.Item2.ToString();
 
-                var fconf = prediction.Item4;
 
-                if (prediction.Item1 is null)
+                if (frameCount % 30 == 0)
                 {
-                    Identity = "Desconhecido";
-                }
-                else Identity = prediction.Item1;
+                    
+                    var prediction = await _faceRecognizer.Predict(extractedPiece);
                 
-                if(prediction.Item3)
-                {
-                    if(fconf > 1) Source = "Real";
-                    else Source = "Fake";
+                    Confidence = prediction.Item4.ToString();
+                    Similarity = prediction.Item2.ToString();
+
+                    var fconf = prediction.Item4;
+
+                    if (prediction.Item1 is null)
+                    {
+                        Identity = "Desconhecido";
+                    }
+                    else Identity = prediction.Item1;
+                
+                    if(prediction.Item3)
+                    {
+                        if(fconf > 1) Source = "Real";
+                        else Source = "Fake";
+                    }
+                    else
+                    {
+                        Source = "Fake";
+                    }
                 }
-                else
-                {
-                    Source = "Fake";
-                }
+
 
                 if (CaptureColorAnalysis)
                 {
@@ -535,8 +540,6 @@ public class MainWindowViewModel : ViewModelBase
                     else if (cLabel == "B") B = $"{colorIndex}";
                     else if (cLabel == "W") W = $"{colorIndex}";
                     
-                    
-                    //CaptureColorAnalysis = false;
                 }
                 
             }
@@ -564,7 +567,7 @@ public class MainWindowViewModel : ViewModelBase
                 {
                     // Since we only have one name just save the first face
                     int i = 1;
-                    var face = faces[0];
+                    var face = _faces[0];
                     
                     var width = face.Box.Width;
                     var height = face.Box.Height;
