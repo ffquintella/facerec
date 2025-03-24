@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Drawing.Imaging;
 using System.IO;
@@ -12,7 +13,6 @@ using Avalonia.Media.Imaging;
 using Avalonia.Threading;
 using Avalonia.Platform;
 using FaceONNX;
-using FFmpeg.AutoGen;
 using FlashCap;
 using MLFaceLib;
 using MLFaceLib.ImageTools;
@@ -20,13 +20,9 @@ using MLFaceLib.ONNX;
 using MsBox.Avalonia;
 using MsBox.Avalonia.Enums;
 using ReactiveUI;
-using SeeShark;
-using SeeShark.Decode;
-using SeeShark.Device;
-using SeeShark.FFmpeg;
 using SkiaSharp;
 using UMapx.Core;
-using PixelFormat = SeeShark.PixelFormat;
+using PixelFormats = FlashCap.PixelFormats;
 using Rectangle = Avalonia.Controls.Shapes.Rectangle;
 
 namespace demoapp.ViewModels;
@@ -43,10 +39,7 @@ public class MainWindowViewModel : ViewModelBase
     {
         Image = new Bitmap(AssetLoader.Open(new Uri("avares://demoapp/Assets/placeholder.png")));
         
-        // FFMPEG setup
-        FFmpegManager.SetupFFmpeg (["/opt/homebrew/Cellar/ffmpeg/7.1_4/lib/"]);
-        
-        MainWindowViewModel.ActiveWindow = this;
+        ActiveWindow = this;
 
         _ = Init();
 
@@ -182,11 +175,42 @@ public class MainWindowViewModel : ViewModelBase
         set => this.RaiseAndSetIfChanged(ref _confidence, value);
     }
 
-    private CaptureDevice? _device;
     
-    private CameraManager _cameraManager;
     
-    private VideoDevice? _camera;
+    private CaptureDeviceDescriptor? _device;
+    
+    public CaptureDeviceDescriptor? Device
+    {
+        get => _device;
+        set => this.RaiseAndSetIfChanged(ref _device, value);
+    }
+    
+    private ObservableCollection<CaptureDeviceDescriptor> _deviceList;
+    
+    public ObservableCollection<CaptureDeviceDescriptor> DeviceList
+    {
+        get => _deviceList;
+        set => this.RaiseAndSetIfChanged(ref _deviceList, value);
+    }
+    
+    private ObservableCollection<VideoCharacteristics> _characteristicsList;
+    
+    public ObservableCollection<VideoCharacteristics> CharacteristicsList
+    {
+        get => _characteristicsList;
+        set => this.RaiseAndSetIfChanged(ref _characteristicsList, value);
+    }
+
+    private VideoCharacteristics? _characteristics;
+    
+    public VideoCharacteristics? Characteristics
+    {
+        get => _characteristics;
+        set => this.RaiseAndSetIfChanged(ref _characteristics, value);
+    }
+    
+    // Constructed capture device.
+    private CaptureDevice? captureDevice;
     
     private static MainWindowViewModel ActiveWindow { get; set; }
     
@@ -199,7 +223,7 @@ public class MainWindowViewModel : ViewModelBase
 
         IsCameraEnabled = true;
         
-        using var _cameraManager = new CameraManager(DeviceInputFormat.AVFoundation);
+        /*using var _cameraManager = new CameraManager(DeviceInputFormat.AVFoundation);
         
         var options = new VideoInputOptions
         {
@@ -215,6 +239,19 @@ public class MainWindowViewModel : ViewModelBase
         
         // Attach your callback to the camera's frame event handler
         _camera.OnFrame += FrameHandler;
+        */
+        
+        // Descriptor is assigned and set valid characteristics:
+        if (this.Device is { } descriptor &&
+            Characteristics is { })
+        {
+            // Open capture device:
+            Debug.WriteLine($"OnCharacteristicsChangedAsync: Opening: {descriptor.Name}");
+            this.captureDevice = await descriptor.OpenAsync(
+                Characteristics,
+                this.OnPixelBufferArrivedAsync);
+            
+        }
         
         _ = CaptureVideo();
         
@@ -233,32 +270,20 @@ public class MainWindowViewModel : ViewModelBase
     {
         
         // Start decoding frames asynchronously
-        _camera.StartCapture();
-
-        // Just wait a bit
-        //Thread.Sleep(TimeSpan.FromSeconds(5));
+        await this.captureDevice!.StartAsync();
         
     }
-
-    public static void FrameHandler(object? _sender, FrameEventArgs e)
-    {
-        // Only care about new frames
-        if (e.Status != DecodeStatus.NewFrame)
-            return;
-        
-        Frame frame = e.Frame;
-
-        ActiveWindow.ProcessImageAsync(frame);
-
-    }
+    
 
     public async Task DisableCamera()
     {
+        await captureDevice!.StopAsync();
+        
         // Stop processing:
         IsCameraEnabled = false;
-        //Image = new Bitmap(AssetLoader.Open(new Uri("avares://FaceRec/Assets/placeholder.png")));
         
-        _camera.StopCapture();
+        Dispatcher.UIThread.Post(() =>
+        Image = new Bitmap(AssetLoader.Open(new Uri("avares://demoapp/Assets/placeholder.png"))));
     }
     
     public void RecogStart()
@@ -280,6 +305,33 @@ public class MainWindowViewModel : ViewModelBase
     
     public async Task Init()
     {
+
+        var devices = new CaptureDevices();
+        
+        DeviceList = new ObservableCollection<CaptureDeviceDescriptor>();
+        
+        foreach (var descriptor in devices.EnumerateDescriptors().
+                     // You could filter by device type and characteristics.
+                     //Where(d => d.DeviceType == DeviceTypes.DirectShow).  // Only DirectShow device.
+                     Where(d => d.Characteristics.Length >= 1))             // One or more valid video characteristics.
+        {
+            DeviceList.Add(descriptor);
+        }
+        
+        Device = DeviceList.FirstOrDefault();
+        
+        CharacteristicsList = new ObservableCollection<VideoCharacteristics>();
+        foreach (var characteristics in Device.Characteristics)
+        {
+            if (characteristics.PixelFormat !=  PixelFormats.Unknown)
+            {
+                this.CharacteristicsList.Add(characteristics);
+            }
+        }
+        
+        this.Characteristics = this.CharacteristicsList.FirstOrDefault();
+        
+        
         _faceRecognizer = new FaceRecognizer();
         
         if (File.Exists(Path.Combine(baseFolder, "facedata.fdt")))
@@ -294,9 +346,24 @@ public class MainWindowViewModel : ViewModelBase
             }
         }
     }
-    
-    
-    private async Task ProcessImageAsync(Frame frame)
+
+    private async Task OnPixelBufferArrivedAsync(PixelBufferScope bufferScope)
+    {
+        
+        // Or, refer image data binary directly.
+        ArraySegment<byte> image = bufferScope.Buffer.ReferImage();
+        
+        // Decode image data to a bitmap:
+        var bitmap = SKBitmap.Decode(image);
+        
+        // `bitmap` is copied, so we can release pixel buffer now.
+        bufferScope.ReleaseNow();
+        
+        ProcessImageAsync(bitmap);
+    }
+
+
+    private async Task ProcessImageAsync(SKBitmap frame)
     {
         //frameCount++;
         if (CaptureColorAnalysis)
@@ -330,11 +397,12 @@ public class MainWindowViewModel : ViewModelBase
         }
         
         
-        var converter = new FrameConverter(frame, PixelFormat.Rgba);
-        var rgbaFrame = converter.Convert(frame);
+        //var converter = new FrameConverter(frame, PixelFormat.Rgba);
+        //var rgbaFrame = converter.Convert(frame);
         
-        using var bitmap = LoadRGBAImage(rgbaFrame.RawData.ToArray(), rgbaFrame.Width, rgbaFrame.Height);
-
+        //using var bitmap = LoadRGBAImage(rgbaFrame.RawData.ToArray(), rgbaFrame.Width, rgbaFrame.Height);
+        
+        using var bitmap = frame;
 
         if (IsRecognitionEnabled)
         {
