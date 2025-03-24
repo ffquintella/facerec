@@ -234,7 +234,7 @@ public class MainWindowViewModel : ViewModelBase
     
     private int colorIndex = 0;
 
-    public async void EnableCamera()
+    public async Task EnableCamera()
     {
 
         IsCameraEnabled = true;
@@ -326,7 +326,7 @@ public class MainWindowViewModel : ViewModelBase
 
         if (CharacteristicsList is null or { Count: <= 0 }) throw new Exception("Invalid camera");
         
-        Characteristics = CharacteristicsList.FirstOrDefault();
+        Characteristics = CharacteristicsList.FirstOrDefault(c => c.Width > 900);
 
         Height = Characteristics!.Height;
         Width = Characteristics!.Width;
