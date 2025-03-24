@@ -129,6 +129,22 @@ public class MainWindowViewModel : ViewModelBase
     
     private SKImage _skImage;
     
+    private int _width = 640;
+    
+    public int Width
+    {
+        get => _width;
+        set => this.RaiseAndSetIfChanged(ref _width, value);
+    }
+    
+    private int _height = 640;
+    
+    public int Height
+    {
+        get => _height;
+        set => this.RaiseAndSetIfChanged(ref _height, value);
+    }
+    
     public SKImage SkImage
     {
         get => _skImage;
@@ -223,24 +239,6 @@ public class MainWindowViewModel : ViewModelBase
 
         IsCameraEnabled = true;
         
-        /*using var _cameraManager = new CameraManager(DeviceInputFormat.AVFoundation);
-        
-        var options = new VideoInputOptions
-        {
-            VideoSize = new (1280, 960),
-            Framerate = new AVRational { num = 20, den = 1 },
-            InputFormat = "rgba",
-            IsRaw = true,
-    
-        };
-        
-        // Get the first camera available
-        _camera = _cameraManager.GetDevice(0, options);
-        
-        // Attach your callback to the camera's frame event handler
-        _camera.OnFrame += FrameHandler;
-        */
-        
         // Descriptor is assigned and set valid characteristics:
         if (this.Device is { } descriptor &&
             Characteristics is { })
@@ -259,12 +257,9 @@ public class MainWindowViewModel : ViewModelBase
     
     private bool _isSaveEnabled ;
     
-    
     private FaceRecognizer _faceRecognizer;
     
     private Rectangle[] _faces;
-    
-    //private FaceLib.FaceRec faceRec =  new FaceLib.FaceRec();
 
     private async Task CaptureVideo()
     {
@@ -328,8 +323,13 @@ public class MainWindowViewModel : ViewModelBase
                 this.CharacteristicsList.Add(characteristics);
             }
         }
+
+        if (CharacteristicsList is null or { Count: <= 0 }) throw new Exception("Invalid camera");
         
-        this.Characteristics = this.CharacteristicsList.FirstOrDefault();
+        Characteristics = CharacteristicsList.FirstOrDefault();
+
+        Height = Characteristics!.Height;
+        Width = Characteristics!.Width;
         
         
         _faceRecognizer = new FaceRecognizer();
@@ -349,15 +349,64 @@ public class MainWindowViewModel : ViewModelBase
 
     private async Task OnPixelBufferArrivedAsync(PixelBufferScope bufferScope)
     {
-        
         // Or, refer image data binary directly.
-        ArraySegment<byte> image = bufferScope.Buffer.ReferImage();
+        ArraySegment<byte> imageSegment = bufferScope.Buffer.ReferImage();
         
-        // Decode image data to a bitmap:
-        var bitmap = SKBitmap.Decode(image);
+        // Sanity check
+        if (imageSegment.Array == null || imageSegment.Count < 54)
+            throw new ArgumentException("ArraySegment does not contain valid BMP data.");
+
+        // Wrap the segment in a memory stream
+        using var stream = new MemoryStream(imageSegment.Array, imageSegment.Offset, imageSegment.Count, writable: false, publiclyVisible: true);
+
+        // Decode the stream into an SKBitmap
+        //SKBitmap bitmap = SKBitmap.Decode(stream);
+        
+        SKImageInfo desiredInfo = new SKImageInfo(Width, Height, SKColorType.Rgba8888, SKAlphaType.Premul);
+        
+        //SKBitmap bitmap = SKBitmap.Decode(stream, desiredInfo);
+        
+        int pixelCount = Width * Height;
+        int rgbaLength = pixelCount * 4;
+
+        if (imageSegment.Count < rgbaLength)
+            throw new ArgumentException("RGB buffer is too small for the given dimensions.");
+
+        // Allocate RGBA output buffer
+        byte[] rgbaBytes = new byte[rgbaLength];
+        
+        int offset = imageSegment.Offset + 54; // Skip BMP header
+
+        for (int i = 0, j = 0; i < rgbaLength; i += 4)
+        {
+            var X = imageSegment.Array[offset + i + 0];
+            var Y = imageSegment.Array[offset + i + 1];
+            var Z = imageSegment.Array[offset + i + 2];
+            var W = imageSegment.Array[offset + i + 3];
+
+
+            rgbaBytes[i + 0] = Y;// R
+            rgbaBytes[i + 1] = Z; // G
+            rgbaBytes[i + 2] = W; // B
+            rgbaBytes[i + 3] = X; // A
+        }
+        
+        SKBitmap bitmap = new SKBitmap();
+        unsafe
+        {
+            fixed (byte* ptr = rgbaBytes)
+            {
+                IntPtr address = (IntPtr)(ptr);
+                bitmap.InstallPixels(desiredInfo, address, desiredInfo.RowBytes);
+            }
+        }
+        
+        
         
         // `bitmap` is copied, so we can release pixel buffer now.
         bufferScope.ReleaseNow();
+        
+        //using var data = image.Encode(SKEncodedImageFormat.Bmp, 100);
         
         ProcessImageAsync(bitmap);
     }
