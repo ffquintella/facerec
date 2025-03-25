@@ -307,7 +307,6 @@ public class MainWindowViewModel : ViewModelBase
     
     public async Task Init()
     {
-        //Thread.Sleep(100);
         var devices = new CaptureDevices();
         
         DeviceList = new ObservableCollection<CaptureDeviceDescriptor>();
@@ -365,13 +364,8 @@ public class MainWindowViewModel : ViewModelBase
 
         // Wrap the segment in a memory stream
         using var stream = new MemoryStream(imageSegment.Array, imageSegment.Offset, imageSegment.Count, writable: false, publiclyVisible: true);
-
-        // Decode the stream into an SKBitmap
-        //SKBitmap bitmap = SKBitmap.Decode(stream);
         
         SKImageInfo desiredInfo = new SKImageInfo(Width, Height, SKColorType.Rgba8888, SKAlphaType.Premul);
-        
-        //SKBitmap bitmap = SKBitmap.Decode(stream, desiredInfo);
         
         int pixelCount = Width * Height;
         int rgbaLength = pixelCount * 4;
@@ -386,6 +380,8 @@ public class MainWindowViewModel : ViewModelBase
 
         for (int i = 0, j = 0; i < rgbaLength; i += 4)
         {
+            
+            // This is in ARGB format
             var X = imageSegment.Array[offset + i + 0];
             var Y = imageSegment.Array[offset + i + 1];
             var Z = imageSegment.Array[offset + i + 2];
@@ -408,12 +404,8 @@ public class MainWindowViewModel : ViewModelBase
             }
         }
         
-        
-        
         // `bitmap` is copied, so we can release pixel buffer now.
         bufferScope.ReleaseNow();
-        
-        //using var data = image.Encode(SKEncodedImageFormat.Bmp, 100);
         
         ProcessImageAsync(bitmap);
     }
@@ -463,7 +455,7 @@ public class MainWindowViewModel : ViewModelBase
         if (IsRecognitionEnabled)
         {
             
-            if(frameCount % 30 == 0) await Task.Run(() =>
+            if(frameCount % 30 == 0) _= Task.Run(() =>
             {
                 var dnnDetector = new FaceDetector();
                 return _faces = dnnDetector.Forward(new SkiaDrawing.Bitmap(bitmap));

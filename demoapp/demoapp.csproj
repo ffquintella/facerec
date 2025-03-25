@@ -1,14 +1,23 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
     <PropertyGroup>
-        <OutputType>WinExe</OutputType>
+        <OutputType>Exe</OutputType>
         <TargetFramework>net9.0</TargetFramework>
         <Nullable>enable</Nullable>
         <BuiltInComInteropSupport>true</BuiltInComInteropSupport>
         <ApplicationManifest>app.manifest</ApplicationManifest>
         <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
-      <UserSecretsId>948e0864-8505-4c65-b333-393861da2758</UserSecretsId>
-      <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-  </PropertyGroup>
+        <UserSecretsId>948e0864-8505-4c65-b333-393861da2758</UserSecretsId>
+        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+        <IsMacOS Condition=" '$(OS)' == 'Unix' and Exists('/System/Library/CoreServices/SystemVersion.plist') ">true</IsMacOS>
+    </PropertyGroup>
+
+    
+    <Target Name="RemoveQuarantineFromAppBundle" AfterTargets="build" Condition=" '$(IsMacOS)' == 'true' ">
+        <Message Text="Detected macOS: $(IsMacOS)" Importance="High" />
+        <Message Text="🔧 Build output dir: $(TargetDir)" Importance="high" />
+        <Exec Command="xattr -rd com.apple.quarantine $(TargetDir)demoapp" />
+    </Target>
+
 
     <ItemGroup>
         <AvaloniaResource Include="Assets\**" />
