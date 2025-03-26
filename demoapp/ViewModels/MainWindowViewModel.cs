@@ -314,7 +314,22 @@ public class MainWindowViewModel : ViewModelBase
         DeviceList = new ObservableCollection<CaptureDeviceDescriptor>();
         try
         {
-            var descriptors = devices.EnumerateDescriptors();
+            int t = 0;
+
+            IEnumerable<CaptureDeviceDescriptor> descriptors = new CaptureDeviceDescriptor[0];
+            
+            while( t < 10)
+            {
+                descriptors = devices.EnumerateDescriptors();
+                if(descriptors.Any()) break;
+                t++;
+                Thread.Sleep(1000);
+            }
+            
+            if( descriptors is null) throw new Exception("Could not find any devices");
+            
+            //var descriptors = devices.EnumerateDescriptors();
+            
             Console.WriteLine($"Found {descriptors.Count()} devices");
             
             foreach (var descriptor in descriptors.
@@ -430,6 +445,9 @@ public class MainWindowViewModel : ViewModelBase
 
     private async Task ProcessImageAsync(SKImage skImage)
     {
+        
+        SKImage? markedImage = null;
+        
         if(frameCount > 1000)
         {
             frameCount = 0;
@@ -467,7 +485,7 @@ public class MainWindowViewModel : ViewModelBase
             }
         }
         
-        using var bitmap = SKBitmap.FromImage(skImage);
+        var bitmap = SKBitmap.FromImage(skImage);
 
         if (IsRecognitionEnabled)
         {
@@ -483,7 +501,9 @@ public class MainWindowViewModel : ViewModelBase
             {
                 
                 // Create a canvas to draw on the image
-                using SKCanvas canvas = new SKCanvas(bitmap);
+                //using SKCanvas canvas = new SKCanvas(bitmap);
+                using SKSurface surface = SKSurface.Create(skImage.PeekPixels());
+                using SKCanvas canvas = surface.Canvas;
             
                 using SKPaint paintYellow = new SKPaint
                 {
@@ -497,6 +517,8 @@ public class MainWindowViewModel : ViewModelBase
                     // Draw the rectangle on the canvas
                     canvas.DrawRect(faceRec.Box.ToSKRect(), paintYellow);
                 }
+                
+                markedImage = surface.Snapshot();
                 
                 var face = _faces[0];
                 var width = face.Box.Width;
@@ -636,8 +658,10 @@ public class MainWindowViewModel : ViewModelBase
         // Convert SKBitmap to JPEG in MemoryStream
         try
         {
-            
-            using SKData encodedData = skImage.Encode(SKEncodedImageFormat.Jpeg, 90); 
+            SKData? encodedData = null;
+            if(markedImage != null) encodedData = skImage.Encode(SKEncodedImageFormat.Jpeg, 90);
+            else encodedData = skImage.Encode(SKEncodedImageFormat.Jpeg, 90);
+
             
             using MemoryStream memoryStream = new MemoryStream();
             // Write to memory stream
@@ -645,6 +669,7 @@ public class MainWindowViewModel : ViewModelBase
             memoryStream.Position = 0;
 
             Image = new Bitmap(memoryStream);
+            encodedData?.Dispose();
             
         }catch(Exception ex)
         {
@@ -737,4 +762,11 @@ public class MainWindowViewModel : ViewModelBase
     {
         _isSaveEnabled = true;
     }
+    
+    public async Task Dispose()
+    {
+        await captureDevice!.StopAsync();
+        captureDevice?.Dispose();
+    }
+    
 }

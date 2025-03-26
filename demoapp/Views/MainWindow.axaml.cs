@@ -1,3 +1,4 @@
+using System;
 using Avalonia.Controls;
 using demoapp.ViewModels;
 
@@ -17,6 +18,14 @@ public partial class MainWindow : Window
             }
         };
     }
-    
+    protected override void OnClosed(EventArgs e)
+    {
+        base.OnClosed(e);
+        
+        if (DataContext is MainWindowViewModel vm)
+        {
+            vm.Dispose().ConfigureAwait(false).GetAwaiter().GetResult();
+        }
+    }
 
 }
