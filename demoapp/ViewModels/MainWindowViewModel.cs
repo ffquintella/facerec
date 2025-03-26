@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Drawing.Imaging;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
@@ -245,6 +246,7 @@ public class MainWindowViewModel : ViewModelBase
         if (this.Device is { } descriptor &&
             Characteristics is { })
         {
+            
             // Open capture device:
             Debug.WriteLine($"OnCharacteristicsChangedAsync: Opening: {descriptor.Name}");
             this.captureDevice = await descriptor.OpenAsync(
@@ -310,19 +312,30 @@ public class MainWindowViewModel : ViewModelBase
         var devices = new CaptureDevices();
         
         DeviceList = new ObservableCollection<CaptureDeviceDescriptor>();
-        
-        foreach (var descriptor in devices.EnumerateDescriptors().
-                     // You could filter by device type and characteristics.
-                     //Where(d => d.DeviceType == DeviceTypes.DirectShow).  // Only DirectShow device.
-                     Where(d => d.Characteristics.Length >= 1))             // One or more valid video characteristics.
+        try
         {
-            DeviceList.Add(descriptor);
-        }
+            var descriptors = devices.EnumerateDescriptors();
+            Console.WriteLine($"Found {descriptors.Count()} devices");
+            
+            foreach (var descriptor in descriptors.
+                         // You could filter by device type and characteristics.
+                         //Where(d => d.DeviceType == DeviceTypes.DirectShow).  // Only DirectShow device.
+                         Where(d => d.Characteristics.Length >= 1))             // One or more valid video characteristics.
+            {
+                DeviceList.Add(descriptor);
+            }
         
-        Device = DeviceList.FirstOrDefault();
+            Device = DeviceList.FirstOrDefault();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex.Message);
+        }
+
+        if(Device == null) throw new Exception("No Device Found");
         
         CharacteristicsList = new ObservableCollection<VideoCharacteristics>();
-        foreach (var characteristics in Device.Characteristics)
+        foreach (var characteristics in Device.Characteristics.Where(c => c.PixelFormat == PixelFormats.ARGB32))
         {
             if (characteristics.PixelFormat !=  PixelFormats.Unknown)
             {
@@ -332,7 +345,7 @@ public class MainWindowViewModel : ViewModelBase
 
         if (CharacteristicsList is null or { Count: <= 0 }) throw new Exception("Invalid camera");
         
-        Characteristics = CharacteristicsList.FirstOrDefault(c => c is { Width: > 900, PixelFormat: PixelFormats.RGB32 });
+        Characteristics = CharacteristicsList.FirstOrDefault(c => c is { Width: > 900 });
 
         Height = Characteristics!.Height;
         Width = Characteristics!.Width;
@@ -358,27 +371,20 @@ public class MainWindowViewModel : ViewModelBase
         // Or, refer image data binary directly.
         ArraySegment<byte> imageSegment = bufferScope.Buffer.ReferImage();
         
-        // Sanity check
-        if (imageSegment.Array == null || imageSegment.Count < 54)
-            throw new ArgumentException("ArraySegment does not contain valid BMP data.");
-
-        // Wrap the segment in a memory stream
-        using var stream = new MemoryStream(imageSegment.Array, imageSegment.Offset, imageSegment.Count, writable: false, publiclyVisible: true);
+        SKImageInfo desiredInfo = new SKImageInfo(1280, 960, SKColorType.Bgra8888, SKAlphaType.Premul);
         
-        SKImageInfo desiredInfo = new SKImageInfo(Width, Height, SKColorType.Rgba8888, SKAlphaType.Premul);
+        Width = 1280;
+        Height = 960;
         
-        int pixelCount = Width * Height;
-        int rgbaLength = pixelCount * 4;
-
-        if (imageSegment.Count < rgbaLength)
+        if (imageSegment.Count - 54 < desiredInfo.BytesSize)
             throw new ArgumentException("RGB buffer is too small for the given dimensions.");
 
         // Allocate RGBA output buffer
-        byte[] rgbaBytes = new byte[rgbaLength];
+        byte[] rgbaBytes = new byte[desiredInfo.BytesSize];
         
         int offset = imageSegment.Offset + 54; // Skip BMP header
 
-        for (int i = 0, j = 0; i < rgbaLength; i += 4)
+        for (int i = 0, j = 0; i < desiredInfo.BytesSize; i += 4)
         {
             
             // This is in ARGB format
@@ -388,35 +394,46 @@ public class MainWindowViewModel : ViewModelBase
             var W = imageSegment.Array[offset + i + 3];
 
 
-            rgbaBytes[i + 0] = Y;// R
-            rgbaBytes[i + 1] = Z; // G
-            rgbaBytes[i + 2] = W; // B
-            rgbaBytes[i + 3] = X; // A
+            rgbaBytes[i + 0] = X;// B
+            rgbaBytes[i + 1] = Y; // G
+            rgbaBytes[i + 2] = Z; // R
+            rgbaBytes[i + 3] = W; // A
         }
         
-        SKBitmap bitmap = new SKBitmap();
-        unsafe
+        
+        
+        //SKBitmap bitmap = new SKBitmap();
+        SKImage? image;
+        GCHandle handle = GCHandle.Alloc(rgbaBytes, GCHandleType.Pinned);
+        try
         {
-            fixed (byte* ptr = rgbaBytes)
+            IntPtr ptr = handle.AddrOfPinnedObject();
+            using (SKPixmap pixmap = new SKPixmap(desiredInfo, ptr, desiredInfo.RowBytes))
             {
-                IntPtr address = (IntPtr)(ptr);
-                bitmap.InstallPixels(desiredInfo, address, desiredInfo.RowBytes);
+                image = SKImage.FromPixels(pixmap);
             }
         }
+        finally
+        {
+            handle.Free();
+        }
+        
         
         // `bitmap` is copied, so we can release pixel buffer now.
         bufferScope.ReleaseNow();
         
-        ProcessImageAsync(bitmap);
+        if(image == null) throw new System.Exception("No image");
+        
+        await ProcessImageAsync(image);
     }
 
 
-    private async Task ProcessImageAsync(SKBitmap bitmap)
+    private async Task ProcessImageAsync(SKImage skImage)
     {
         if(frameCount > 1000)
         {
             frameCount = 0;
-            GC.Collect();
+            //GC.Collect();
         }
         frameCount++;
         
@@ -450,15 +467,15 @@ public class MainWindowViewModel : ViewModelBase
             }
         }
         
-        //using var bitmap = frame;
+        using var bitmap = SKBitmap.FromImage(skImage);
 
         if (IsRecognitionEnabled)
         {
             
-            if(frameCount % 30 == 0) _= Task.Run(() =>
+            if(frameCount % 20 == 0) _= Task.Run(() =>
             {
                 var dnnDetector = new FaceDetector();
-                return _faces = dnnDetector.Forward(new SkiaDrawing.Bitmap(bitmap));
+                _faces = dnnDetector.Forward(new SkiaDrawing.Bitmap(bitmap));
             });
             
             // Only ID the first face
@@ -492,33 +509,40 @@ public class MainWindowViewModel : ViewModelBase
                         
                 bitmap.ExtractSubset(extractedPiece, region);
 
-
-                if (frameCount % 60 == 0)
+                var idImage = extractedPiece.Copy();
+                
+                _= Task.Run(async () =>
                 {
+                    if (frameCount % 60 == 0)
+                    {
                     
-                    var prediction = await _faceRecognizer.Predict(extractedPiece);
+                        var prediction = await _faceRecognizer.Predict(idImage);
+                        
+                        idImage.Dispose();
                 
-                    Confidence = prediction.Item4.ToString();
-                    Similarity = prediction.Item2.ToString();
+                        Confidence = prediction.Item4.ToString(CultureInfo.InvariantCulture);
+                        Similarity = prediction.Item2.ToString(CultureInfo.InvariantCulture);
 
-                    var fconf = prediction.Item4;
+                        var fconf = prediction.Item4;
 
-                    if (prediction.Item1 is null)
-                    {
-                        Identity = "Desconhecido";
-                    }
-                    else Identity = prediction.Item1;
+                        if (prediction.Item1 is null)
+                        {
+                            Identity = "Desconhecido";
+                        }
+                        else Identity = prediction.Item1;
                 
-                    if(prediction.Item3)
-                    {
-                        if(fconf > 1) Source = "Real";
-                        else Source = "Fake";
+                        if(prediction.Item3)
+                        {
+                            if(fconf > 1) Source = "Real";
+                            else Source = "Fake";
+                        }
+                        else
+                        {
+                            Source = "Fake";
+                        }
                     }
-                    else
-                    {
-                        Source = "Fake";
-                    }
-                }
+                });
+
 
 
                 if (CaptureColorAnalysis)
@@ -610,17 +634,22 @@ public class MainWindowViewModel : ViewModelBase
         }
         
         // Convert SKBitmap to JPEG in MemoryStream
-        using MemoryStream memoryStream = new MemoryStream();
-        using SKImage image = SKImage.FromBitmap(bitmap);
-        using SKData encodedData = image.Encode(SKEncodedImageFormat.Jpeg, 90); 
-        
-        // Write to memory stream
-        encodedData.SaveTo(memoryStream);
-        memoryStream.Position = 0;
+        try
+        {
+            
+            using SKData encodedData = skImage.Encode(SKEncodedImageFormat.Jpeg, 90); 
+            
+            using MemoryStream memoryStream = new MemoryStream();
+            // Write to memory stream
+            encodedData.SaveTo(memoryStream);
+            memoryStream.Position = 0;
 
-        Image = new Bitmap(memoryStream);
-        
-        
+            Image = new Bitmap(memoryStream);
+            
+        }catch(Exception ex)
+        {
+            Console.WriteLine(@"Error converting image: " + ex.Message);
+        }
         
     }
     
