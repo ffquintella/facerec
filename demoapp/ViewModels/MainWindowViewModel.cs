@@ -296,10 +296,49 @@ public class MainWindowViewModel : ViewModelBase
         IsRecognitionEnabled = false;
     }
 
+    public async Task CaptureColor(bool captured = false)
+    {
+        if (captured)
+        {
+            colorIndex++;
+        }
+        
+        switch (colorIndex)
+        {
+            case 0:
+                await Dispatcher.UIThread.InvokeAsync(() => BackgroundBrush = new SolidColorBrush(Color.FromRgb(255,0,0)));
+                break;
+            case 1:
+                Dispatcher.UIThread.Post(() => BackgroundBrush = new SolidColorBrush(Color.FromRgb(0,255,0)));
+                break;
+            case 2:
+                Dispatcher.UIThread.Post(() => BackgroundBrush = new SolidColorBrush(Color.FromRgb(0,0,255)));
+                break;
+            case 3:
+                Dispatcher.UIThread.Post(() => BackgroundBrush = new SolidColorBrush(Color.FromRgb(255,255,255)));
+                break;
+            case 4:
+                Dispatcher.UIThread.Post(() => BackgroundBrush = new SolidColorBrush(Color.FromRgb(0,0,0)));
+                break;
+        }
+
+        //Thread.Sleep(10);
+        
+
+        if (colorIndex > 5)
+        {
+            colorIndex = 0;
+            CaptureColorAnalysis = false;
+        }
+        else
+        {
+            CaptureColorAnalysis = true;
+        }
+    }
+    
     public async Task ColorVerify()
     {
-        CaptureColorAnalysis = true;
-        
+        _= CaptureColor();
     }
     
     public async Task OnLoaded()
@@ -455,40 +494,10 @@ public class MainWindowViewModel : ViewModelBase
         }
         frameCount++;
         
-        if (CaptureColorAnalysis)
-        {
-            switch (colorIndex)
-            {
-                case 0:
-                    Dispatcher.UIThread.Post(() => BackgroundBrush = new SolidColorBrush(Color.FromRgb(255,0,0)));
-                    break;
-                case 1:
-                    Dispatcher.UIThread.Post(() => BackgroundBrush = new SolidColorBrush(Color.FromRgb(0,255,0)));
-                    break;
-                case 2:
-                    Dispatcher.UIThread.Post(() => BackgroundBrush = new SolidColorBrush(Color.FromRgb(0,0,255)));
-                    break;
-                case 3:
-                    Dispatcher.UIThread.Post(() => BackgroundBrush = new SolidColorBrush(Color.FromRgb(255,255,255)));
-                    break;
-                case 4:
-                    Dispatcher.UIThread.Post(() => BackgroundBrush = new SolidColorBrush(Color.FromRgb(0,0,0)));
-                    break;
-            }
-
-            colorIndex++;
-
-            if (colorIndex > 5)
-            {
-                colorIndex = 0;
-                CaptureColorAnalysis = false;
-            }
-        }
-        
-        var bitmap = SKBitmap.FromImage(skImage);
 
         if (IsRecognitionEnabled)
         {
+            var bitmap = SKBitmap.FromImage(skImage);
             
             if(frameCount % 20 == 0) _= Task.Run(() =>
             {
@@ -542,8 +551,8 @@ public class MainWindowViewModel : ViewModelBase
                         
                         idImage.Dispose();
                 
-                        Confidence = prediction.Item4.ToString(CultureInfo.InvariantCulture);
-                        Similarity = prediction.Item2.ToString(CultureInfo.InvariantCulture);
+                        Confidence = prediction.Item4.ToString(CultureInfo.CurrentCulture);
+                        Similarity = prediction.Item2.ToString(CultureInfo.CurrentCulture);
 
                         var fconf = prediction.Item4;
 
@@ -552,16 +561,10 @@ public class MainWindowViewModel : ViewModelBase
                             Identity = "Desconhecido";
                         }
                         else Identity = prediction.Item1;
-                
-                        if(prediction.Item3)
-                        {
-                            if(fconf > 1) Source = "Real";
-                            else Source = "Fake";
-                        }
-                        else
-                        {
-                            Source = "Fake";
-                        }
+                        
+                        if(fconf < 1) Source = "Real";
+                        else Source = "Fake";
+  
                     }
                 });
 
@@ -569,22 +572,38 @@ public class MainWindowViewModel : ViewModelBase
 
                 if (CaptureColorAnalysis)
                 {
+                    CaptureColorAnalysis = false;
+                    await Task.Run(async () =>
+                    {
+                        var colorPredictor = colorIdentifier;
                     
-                    var colorPredictor = colorIdentifier;
-                    
-                    //var normalizedArray = NormalizationHelper.RGBMeanNormalization(extractedPiece,
-                    //    [0.485f, 0.456f, 0.406f], [0.229f, 0.224f, 0.225f]);
-                    
-                    var cpfloat = colorPredictor.Forward(extractedPiece);
+                        //var normalizedArray = NormalizationHelper.RGBMeanNormalization(idImage,
+                        //    [0.485f, 0.456f, 0.406f], [0.229f, 0.224f, 0.225f]);
+                        
+                        var filePath = "/Users/felipe/tmp/";
+                        using (SKImage image = SKImage.FromBitmap(idImage))
+                        using (SKData data = image.Encode(SKEncodedImageFormat.Png, 100)) // PNG format, quality 100
+                        using (FileStream stream = File.OpenWrite(filePath + $"{colorIndex}_sample.png"))
+                        {
+                            data.SaveTo(stream);
+                        }
+                        
+                        
+                        var cpfloat = colorPredictor.Forward(idImage);
 
-                    var max = Matrice.Max(cpfloat, out int cPredict);
-                    var cLabel = ColorIdentifier.Labels[cPredict];
+                        var max = Matrice.Max(cpfloat, out int cPredict);
+                        var cLabel = ColorIdentifier.Labels[cPredict];
 
-                    if (cLabel == "NC") NC = $"{colorIndex}";  // 1 - W / NC  4 - R
-                    else if (cLabel == "R") R = $"{colorIndex}";
-                    else if (cLabel == "G") G = $"{colorIndex}";
-                    else if (cLabel == "B") B = $"{colorIndex}";
-                    else if (cLabel == "W") W = $"{colorIndex}";
+                        if (cLabel == "NC") NC = $"{colorIndex}";  // 1 - W / NC  4 - R
+                        else if (cLabel == "R") R = $"{colorIndex}";
+                        else if (cLabel == "G") G = $"{colorIndex}";
+                        else if (cLabel == "B") B = $"{colorIndex}";
+                        else if (cLabel == "W") W = $"{colorIndex}";
+
+                        await CaptureColor(true);
+                        
+                    });
+
                     
                 }
                 
@@ -644,10 +663,8 @@ public class MainWindowViewModel : ViewModelBase
                     _ = TrainModel();
                 }
                 
-                
                 _isSaveEnabled = false;
             }
-            
             
         }
         else

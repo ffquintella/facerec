@@ -44,7 +44,8 @@ public class ColorIdentifier: BaseClassifier
     /// <summary>
     /// Returns the labels.
     /// </summary>
-    public static readonly string[] Labels = new string[] { "NC", "R", "W", "G", "B" };
+    //public static readonly string[] Labels = new string[] { "NC", "R", "W", "G", "B" };
+    public static readonly string[] Labels = new string[] { "R", "B", "G", "W", "NC" };
 
     #endregion
     
