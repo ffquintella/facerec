@@ -14,7 +14,7 @@
     <ItemGroup>
       <PackageReference Include="MathNet.Numerics" Version="5.0.0" />
       <PackageReference Include="runtime.osx.10.10-x64.CoreCompat.System.Drawing" Version="6.0.5.128" />
-      <PackageReference Include="SkiaDrawing" Version="1.0.0" />
+      <PackageReference Include="SkiaDrawing" Version="1.0.1" />
     </ItemGroup>
 
     <ItemGroup>
